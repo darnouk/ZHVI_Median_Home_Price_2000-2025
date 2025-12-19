@@ -1015,7 +1015,7 @@
 
         // Get color based on price
         function getColor(price) {
-            if (!price || price === 0) return '#2a2a40';
+            if (!price || price === 0) return '#6b7280'; // Light gray for no data
             
             const normalized = (price - priceRange.min) / (priceRange.max - priceRange.min);
             const index = Math.min(Math.floor(normalized * COLORS.length), COLORS.length - 1);

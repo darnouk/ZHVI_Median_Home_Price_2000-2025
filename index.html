@@ -46,10 +46,52 @@
             width: 320px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
                         0 0 0 1px rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, opacity 0.3s ease;
         }
 
         .panel-header {
             margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .panel-header-text {
+            flex: 1;
+        }
+
+        /* Mobile Toggle Button */
+        .mobile-toggle {
+            display: none;
+            width: 32px;
+            height: 32px;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            color: #a5b4fc;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            margin-left: 12px;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-toggle:hover {
+            background: rgba(99, 102, 241, 0.3);
+        }
+
+        .mobile-toggle svg {
+            transition: transform 0.3s ease;
+        }
+
+        .control-panel.collapsed .mobile-toggle svg {
+            transform: rotate(180deg);
+        }
+
+        .panel-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
         }
 
         .panel-title {
@@ -434,22 +476,124 @@
         /* Responsive */
         @media (max-width: 768px) {
             .control-panel {
-                width: calc(100% - 40px);
-                max-width: 320px;
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                width: auto;
+                max-width: none;
+                padding: 16px;
+                border-radius: 12px;
+            }
+
+            .control-panel.collapsed .panel-content {
+                max-height: 0;
+                opacity: 0;
+                margin-top: 0;
+            }
+
+            .control-panel:not(.collapsed) .panel-content {
+                max-height: 500px;
+                opacity: 1;
+            }
+
+            .mobile-toggle {
+                display: flex;
+            }
+
+            .panel-header {
+                margin-bottom: 0;
+            }
+
+            .control-panel:not(.collapsed) .panel-header {
+                margin-bottom: 16px;
+            }
+
+            .panel-title {
+                font-size: 1.1rem;
+            }
+
+            .panel-subtitle {
+                font-size: 0.75rem;
+            }
+
+            .control-group {
+                margin-bottom: 14px;
+            }
+
+            .state-select,
+            .zip-search {
+                padding: 10px 14px;
+                font-size: 0.9rem;
+            }
+
+            .current-year {
+                font-size: 1.5rem;
+            }
+
+            .year-range {
+                font-size: 0.75rem;
+            }
+
+            .play-btn {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+
+            .stats-bar {
+                margin-top: 14px;
+                padding-top: 14px;
+                gap: 8px;
+            }
+
+            .stat-value {
+                font-size: 0.95rem;
+            }
+
+            .stat-label {
+                font-size: 0.6rem;
             }
 
             .info-panel {
                 top: auto;
-                bottom: 100px;
-                right: 20px;
-                left: 20px;
+                bottom: 90px;
+                right: 10px;
+                left: 10px;
                 min-width: auto;
+                padding: 14px 18px;
+            }
+
+            .info-price {
+                font-size: 1.4rem;
             }
 
             .legend {
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                transform: none;
+                padding: 12px 16px;
+            }
+
+            .legend-scale {
+                width: 100%;
+            }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 400px) {
+            .control-panel {
+                top: 8px;
+                left: 8px;
+                right: 8px;
+                padding: 12px;
+            }
+
+            .panel-title {
+                font-size: 1rem;
+            }
+
+            .current-year {
+                font-size: 1.3rem;
             }
         }
 
@@ -472,64 +616,73 @@
     <div id="map"></div>
 
     <!-- Control Panel -->
-    <div class="control-panel">
+    <div class="control-panel" id="controlPanel">
         <div class="panel-header">
-            <h1 class="panel-title">🏠 Home Price Explorer</h1>
-            <p class="panel-subtitle">ZHVI Median Home Values by ZIP Code</p>
+            <div class="panel-header-text">
+                <h1 class="panel-title">🏠 Home Price Explorer</h1>
+                <p class="panel-subtitle">ZHVI Median Home Values by ZIP Code</p>
+            </div>
+            <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle panel">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 15l-6-6-6 6"/>
+                </svg>
+            </button>
         </div>
 
-        <div class="control-group">
-            <label class="control-label">Search ZIP Code</label>
-            <div class="search-container">
-                <input type="text" id="zipSearch" class="zip-search" placeholder="Enter 5-digit ZIP..." maxlength="5" inputmode="numeric">
-                <button id="searchBtn" class="search-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                </button>
+        <div class="panel-content" id="panelContent">
+            <div class="control-group">
+                <label class="control-label">Search ZIP Code</label>
+                <div class="search-container">
+                    <input type="text" id="zipSearch" class="zip-search" placeholder="Enter 5-digit ZIP..." maxlength="5" inputmode="numeric">
+                    <button id="searchBtn" class="search-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="searchError" class="search-error"></div>
             </div>
-            <div id="searchError" class="search-error"></div>
-        </div>
 
-        <div class="control-group">
-            <label class="control-label">Select State</label>
-            <select id="stateSelect" class="state-select">
-                <option value="">Choose a state...</option>
-            </select>
-        </div>
+            <div class="control-group">
+                <label class="control-label">Select State</label>
+                <select id="stateSelect" class="state-select">
+                    <option value="">Choose a state...</option>
+                </select>
+            </div>
 
-        <div class="control-group">
-            <label class="control-label">Year</label>
-            <div class="year-display">
-                <span id="currentYear" class="current-year">2000</span>
-                <span class="year-range">2000 - 2025</span>
+            <div class="control-group">
+                <label class="control-label">Year</label>
+                <div class="year-display">
+                    <span id="currentYear" class="current-year">2000</span>
+                    <span class="year-range">2000 - 2025</span>
+                </div>
+                <div class="slider-container">
+                    <input type="range" id="yearSlider" class="year-slider" min="2000" max="2025" value="2000">
+                </div>
+                <div class="play-controls">
+                    <button id="playBtn" class="play-btn">
+                        <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        <span id="playText">Play Timeline</span>
+                    </button>
+                </div>
             </div>
-            <div class="slider-container">
-                <input type="range" id="yearSlider" class="year-slider" min="2000" max="2025" value="2000">
-            </div>
-            <div class="play-controls">
-                <button id="playBtn" class="play-btn">
-                    <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                    <span id="playText">Play Timeline</span>
-                </button>
-            </div>
-        </div>
 
-        <div class="stats-bar" id="statsBar" style="display: none;">
-            <div class="stat-item">
-                <div class="stat-value" id="statMedian">-</div>
-                <div class="stat-label">Median</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="statMin">-</div>
-                <div class="stat-label">Lowest</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="statMax">-</div>
-                <div class="stat-label">Highest</div>
+            <div class="stats-bar" id="statsBar" style="display: none;">
+                <div class="stat-item">
+                    <div class="stat-value" id="statMedian">-</div>
+                    <div class="stat-label">Median</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statMin">-</div>
+                    <div class="stat-label">Lowest</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statMax">-</div>
+                    <div class="stat-label">Highest</div>
+                </div>
             </div>
         </div>
     </div>
@@ -1224,6 +1377,32 @@
             zipSearch.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     searchZipCode(zipSearch.value);
+                }
+            });
+
+            // Mobile panel toggle
+            const controlPanel = document.getElementById('controlPanel');
+            const mobileToggle = document.getElementById('mobileToggle');
+            
+            mobileToggle.addEventListener('click', () => {
+                controlPanel.classList.toggle('collapsed');
+            });
+
+            // Auto-collapse panel on mobile after state selection
+            document.getElementById('stateSelect').addEventListener('change', () => {
+                if (window.innerWidth <= 768) {
+                    setTimeout(() => {
+                        controlPanel.classList.add('collapsed');
+                    }, 300);
+                }
+            });
+
+            // Auto-collapse panel on mobile after ZIP search
+            searchBtn.addEventListener('click', () => {
+                if (window.innerWidth <= 768 && zipSearch.value.length === 5) {
+                    setTimeout(() => {
+                        controlPanel.classList.add('collapsed');
+                    }, 500);
                 }
             });
 

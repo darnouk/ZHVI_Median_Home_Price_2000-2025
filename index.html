@@ -108,6 +108,8 @@
 
         .control-group {
             margin-bottom: 20px;
+            width: 100%;
+            overflow: hidden;
         }
 
         .control-label {
@@ -154,10 +156,12 @@
         .search-container {
             display: flex;
             gap: 8px;
+            width: 100%;
         }
 
         .zip-search {
             flex: 1;
+            min-width: 0;
             padding: 12px 16px;
             background: rgba(30, 41, 59, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -184,7 +188,8 @@
         }
 
         .search-btn {
-            padding: 12px 14px;
+            padding: 12px 16px;
+            min-width: 48px;
             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             border: none;
             border-radius: 10px;
@@ -194,6 +199,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         .search-btn:hover {

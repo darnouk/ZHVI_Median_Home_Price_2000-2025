@@ -315,6 +315,65 @@
             background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
         }
 
+        /* Scale Toggle */
+        .scale-toggle-container {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scale-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .scale-toggle-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .scale-toggle-label svg {
+            width: 14px;
+            height: 14px;
+            opacity: 0.7;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: flex;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 6px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .toggle-option {
+            padding: 6px 10px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #64748b;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .toggle-option:hover {
+            color: #94a3b8;
+        }
+
+        .toggle-option.active {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
         /* Legend */
         .legend {
             position: absolute;
@@ -539,6 +598,20 @@
                 font-size: 0.8rem;
             }
 
+            .scale-toggle-container {
+                margin-top: 12px;
+                padding-top: 12px;
+            }
+
+            .scale-toggle-label {
+                font-size: 0.7rem;
+            }
+
+            .toggle-option {
+                padding: 5px 8px;
+                font-size: 0.65rem;
+            }
+
             .stats-bar {
                 margin-top: 14px;
                 padding-top: 14px;
@@ -668,6 +741,22 @@
                         <span id="playText">Play Timeline</span>
                     </button>
                 </div>
+
+                <div class="scale-toggle-container">
+                    <div class="scale-toggle">
+                        <span class="scale-toggle-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 3v18h18"/>
+                                <path d="M7 16l4-8 4 4 6-6"/>
+                            </svg>
+                            Color Scale
+                        </span>
+                        <div class="toggle-switch">
+                            <button class="toggle-option active" id="scaleState" data-scale="state">State</button>
+                            <button class="toggle-option" id="scaleNational" data-scale="national">National</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="stats-bar" id="statsBar" style="display: none;">
@@ -796,6 +885,8 @@
         let isPlaying = false;
         let playInterval = null;
         let priceRange = { min: 0, max: 1000000 };
+        let scaleMode = 'state'; // 'state' or 'national'
+        let nationalPriceRange = {}; // Stores national ranges per year
 
         // Initialize the map
         function initMap() {
@@ -855,11 +946,45 @@
                             }
                         });
                         console.log(`Loaded ${Object.keys(zhviData).length} ZIP codes with price data`);
+                        
+                        // Calculate national price ranges for each year
+                        calculateNationalPriceRanges();
+                        
                         resolve();
                     },
                     error: (err) => reject(err)
                 });
             });
+        }
+
+        // Calculate national price ranges for all years
+        function calculateNationalPriceRanges() {
+            for (let year = 2000; year <= 2025; year++) {
+                const prices = [];
+                
+                Object.values(zhviData).forEach(data => {
+                    if (data[year]) {
+                        const price = parseFloat(data[year]);
+                        if (!isNaN(price) && price > 0) {
+                            prices.push(price);
+                        }
+                    }
+                });
+
+                if (prices.length > 0) {
+                    prices.sort((a, b) => a - b);
+                    const p5 = prices[Math.floor(prices.length * 0.05)];
+                    const p95 = prices[Math.floor(prices.length * 0.95)];
+                    
+                    nationalPriceRange[year] = {
+                        min: p5,
+                        max: p95
+                    };
+                } else {
+                    nationalPriceRange[year] = { min: 50000, max: 1000000 };
+                }
+            }
+            console.log('National price ranges calculated:', nationalPriceRange[2025]);
         }
 
         // Load state GeoJSON
@@ -1052,16 +1177,9 @@
                 onEachFeature: onEachFeature
             });
 
-            // Calculate price range
-            const range = calculatePriceRange(geojson);
-            priceRange = { min: range.min, max: range.max };
-
-            // Update legend
-            document.getElementById('legendMin').textContent = formatCurrency(range.min);
-            document.getElementById('legendMax').textContent = formatCurrency(range.max);
-
-            // Update stats
-            updateStats(range);
+            // Calculate and apply price range based on scale mode
+            const stateRange = calculatePriceRange(geojson);
+            applyPriceRange(stateRange);
 
             // Re-style with correct price range
             currentLayer.setStyle(styleFeature);
@@ -1069,6 +1187,25 @@
             // Add to map and zoom
             currentLayer.addTo(map);
             map.flyTo(state.center, state.zoom, { duration: 1 });
+        }
+
+        // Apply price range based on current scale mode
+        function applyPriceRange(stateRange) {
+            if (scaleMode === 'national' && nationalPriceRange[currentYear]) {
+                priceRange = { 
+                    min: nationalPriceRange[currentYear].min, 
+                    max: nationalPriceRange[currentYear].max 
+                };
+            } else {
+                priceRange = { min: stateRange.min, max: stateRange.max };
+            }
+
+            // Update legend
+            document.getElementById('legendMin').textContent = formatCurrency(priceRange.min);
+            document.getElementById('legendMax').textContent = formatCurrency(priceRange.max);
+
+            // Update stats (always show state stats for context)
+            updateStats(stateRange);
         }
 
         // Update statistics display
@@ -1092,17 +1229,30 @@
                 fetch(`geojsons/${STATES[currentState].file}`)
                     .then(res => res.json())
                     .then(geojson => {
-                        const range = calculatePriceRange(geojson);
-                        priceRange = { min: range.min, max: range.max };
-                        
-                        // Update legend
-                        document.getElementById('legendMin').textContent = formatCurrency(range.min);
-                        document.getElementById('legendMax').textContent = formatCurrency(range.max);
-                        
-                        // Update stats
-                        updateStats(range);
+                        const stateRange = calculatePriceRange(geojson);
+                        applyPriceRange(stateRange);
                         
                         // Re-style layer
+                        currentLayer.setStyle(styleFeature);
+                    });
+            }
+        }
+
+        // Set scale mode and refresh display
+        function setScaleMode(mode) {
+            scaleMode = mode;
+            
+            // Update toggle UI
+            document.getElementById('scaleState').classList.toggle('active', mode === 'state');
+            document.getElementById('scaleNational').classList.toggle('active', mode === 'national');
+
+            // Refresh current state display if one is loaded
+            if (currentLayer && currentState) {
+                fetch(`geojsons/${STATES[currentState].file}`)
+                    .then(res => res.json())
+                    .then(geojson => {
+                        const stateRange = calculatePriceRange(geojson);
+                        applyPriceRange(stateRange);
                         currentLayer.setStyle(styleFeature);
                     });
             }
@@ -1356,6 +1506,10 @@
             });
 
             document.getElementById('playBtn').addEventListener('click', togglePlay);
+
+            // Scale toggle functionality
+            document.getElementById('scaleState').addEventListener('click', () => setScaleMode('state'));
+            document.getElementById('scaleNational').addEventListener('click', () => setScaleMode('national'));
 
             // ZIP search functionality
             const zipSearch = document.getElementById('zipSearch');

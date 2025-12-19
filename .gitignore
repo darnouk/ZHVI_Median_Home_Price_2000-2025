@@ -17,3 +17,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Large data files (too big for GitHub)
+Zip_Codes.geojson
+ZHVI_WI.xlsx

@@ -209,6 +209,104 @@ body {
     color: #4ade80;
 }
 
+/* Affordability Filter */
+.affordability-group .control-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.optional-tag {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #475569;
+    background: rgba(71, 85, 105, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.affordability-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.income-prefix {
+    color: #64748b;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.income-input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #f8fafc;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.income-input::placeholder {
+    color: #64748b;
+}
+
+.income-input:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+    background-color: rgba(30, 41, 59, 1);
+}
+
+.income-input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.affordability-toggle {
+    padding: 10px 12px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.affordability-toggle:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+    color: #a5b4fc;
+}
+
+.affordability-toggle.active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: transparent;
+    color: white;
+}
+
+.affordability-info {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    min-height: 1.2em;
+}
+
+.affordability-info .affordable-count {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+.affordability-info .max-price {
+    color: #a5b4fc;
+}
+
 /* Year Slider */
 .year-display {
     display: flex;

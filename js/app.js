@@ -21,7 +21,11 @@ const AppState = {
     priceRange: { min: 0, max: 1000000 },
     scaleMode: 'state',    // 'state' or 'national'
     nationalPriceRange: {}, // National ranges per year (calculated once)
-    isDataLoaded: false    // Track if CSV is loaded
+    isDataLoaded: false,   // Track if CSV is loaded
+    // Affordability feature
+    affordabilityMode: false,
+    maxAffordablePrice: null,  // Calculated from income (3.5x multiplier)
+    AFFORDABILITY_MULTIPLIER: 3.5  // Standard mortgage qualification rule
 };
 
 // DOM element cache
@@ -56,6 +60,10 @@ function cacheElements() {
     Elements.mobileToggle = document.getElementById('mobileToggle');
     Elements.scaleState = document.getElementById('scaleState');
     Elements.scaleNational = document.getElementById('scaleNational');
+    // Affordability elements
+    Elements.incomeInput = document.getElementById('incomeInput');
+    Elements.affordabilityToggle = document.getElementById('affordabilityToggle');
+    Elements.affordabilityInfo = document.getElementById('affordabilityInfo');
 }
 
 /**
@@ -282,6 +290,23 @@ function styleFeature(feature) {
         price = parseFloat(data[AppState.currentYear]) || 0;
     }
 
+    // Affordability mode styling
+    if (AppState.affordabilityMode && AppState.maxAffordablePrice) {
+        const isAffordable = price > 0 && price <= AppState.maxAffordablePrice;
+        const isNoData = !price || price === 0;
+        
+        return {
+            fillColor: isNoData ? '#6b7280' : (isAffordable ? '#10b981' : '#1e293b'),
+            weight: isAffordable ? 1.5 : 0.5,
+            opacity: isAffordable ? 0.8 : 0.3,
+            color: isAffordable ? '#059669' : '#0f172a',
+            fillOpacity: isNoData ? 0.3 : (isAffordable ? 0.7 : 0.15),
+            lineCap: 'round',
+            lineJoin: 'round'
+        };
+    }
+
+    // Normal mode styling
     return {
         fillColor: getColor(price),
         weight: 1,
@@ -446,6 +471,11 @@ async function renderState(stateAbbr) {
     // Add to map and zoom
     AppState.currentLayer.addTo(AppState.map);
     AppState.map.flyTo(state.center, state.zoom, { duration: 1 });
+    
+    // Update affordability display if active
+    if (AppState.affordabilityMode) {
+        updateAffordabilityDisplay();
+    }
 }
 
 /**
@@ -463,6 +493,11 @@ function updateYear(year) {
         const stateRange = calculatePriceRange(AppState.currentGeoJSON);
         applyPriceRange(stateRange);
         AppState.currentLayer.setStyle(styleFeature);
+        
+        // Update affordability display if active
+        if (AppState.affordabilityMode) {
+            updateAffordabilityDisplay();
+        }
     }
 }
 
@@ -651,6 +686,103 @@ function setupEventListeners() {
             }, 500);
         }
     });
+
+    // Affordability - format income input with commas
+    Elements.incomeInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value) {
+            value = parseInt(value).toLocaleString();
+        }
+        e.target.value = value;
+        
+        // Update max affordable price
+        const income = parseInt(value.replace(/,/g, '')) || 0;
+        AppState.maxAffordablePrice = income > 0 ? income * AppState.AFFORDABILITY_MULTIPLIER : null;
+        
+        // If affordability mode is active, update display
+        if (AppState.affordabilityMode && AppState.currentLayer) {
+            updateAffordabilityDisplay();
+            AppState.currentLayer.setStyle(styleFeature);
+        }
+    });
+
+    // Affordability toggle button
+    Elements.affordabilityToggle.addEventListener('click', () => {
+        toggleAffordabilityMode();
+    });
+
+    // Affordability - Enter key
+    Elements.incomeInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !AppState.affordabilityMode) {
+            toggleAffordabilityMode();
+        }
+    });
+}
+
+/**
+ * Toggle affordability mode on/off
+ */
+function toggleAffordabilityMode() {
+    const income = parseInt(Elements.incomeInput.value.replace(/,/g, '')) || 0;
+    
+    if (income <= 0) {
+        Elements.affordabilityInfo.textContent = 'Enter your annual income first';
+        Elements.affordabilityInfo.style.color = '#f87171';
+        setTimeout(() => {
+            Elements.affordabilityInfo.textContent = '';
+            Elements.affordabilityInfo.style.color = '';
+        }, 2000);
+        return;
+    }
+    
+    AppState.affordabilityMode = !AppState.affordabilityMode;
+    AppState.maxAffordablePrice = income * AppState.AFFORDABILITY_MULTIPLIER;
+    
+    // Update toggle button
+    Elements.affordabilityToggle.classList.toggle('active', AppState.affordabilityMode);
+    
+    if (AppState.affordabilityMode) {
+        updateAffordabilityDisplay();
+    } else {
+        Elements.affordabilityInfo.innerHTML = '';
+    }
+    
+    // Re-style the map
+    if (AppState.currentLayer) {
+        AppState.currentLayer.setStyle(styleFeature);
+    }
+}
+
+/**
+ * Update the affordability info display
+ */
+function updateAffordabilityDisplay() {
+    if (!AppState.currentGeoJSON || !AppState.affordabilityMode) return;
+    
+    const maxPrice = AppState.maxAffordablePrice;
+    let affordableCount = 0;
+    let totalWithData = 0;
+    
+    AppState.currentGeoJSON.features.forEach(feature => {
+        const zip = feature.properties.ZCTA5CE10;
+        const data = AppState.zhviData[zip];
+        if (data && data[AppState.currentYear]) {
+            const price = parseFloat(data[AppState.currentYear]);
+            if (price > 0) {
+                totalWithData++;
+                if (price <= maxPrice) {
+                    affordableCount++;
+                }
+            }
+        }
+    });
+    
+    const percentage = totalWithData > 0 ? Math.round((affordableCount / totalWithData) * 100) : 0;
+    
+    Elements.affordabilityInfo.innerHTML = `
+        <span class="affordable-count">${affordableCount} ZIP codes</span> affordable 
+        (${percentage}%) · Max: <span class="max-price">${formatCurrency(maxPrice)}</span>
+    `;
 }
 
 /**

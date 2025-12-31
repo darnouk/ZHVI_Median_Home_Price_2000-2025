@@ -720,9 +720,44 @@ function setupEventListeners() {
 
     // Info tooltip click support (for touch devices)
     const infoTooltip = document.querySelector('.info-tooltip');
-    if (infoTooltip) {
+    const tooltipContent = document.querySelector('.tooltip-content');
+    
+    if (infoTooltip && tooltipContent) {
+        // Position the tooltip when showing
+        const positionTooltip = () => {
+            const rect = infoTooltip.getBoundingClientRect();
+            const tooltipWidth = 280;
+            
+            // Position to the right of the icon, or left if not enough space
+            let left = rect.right + 10;
+            if (left + tooltipWidth > window.innerWidth - 20) {
+                left = rect.left - tooltipWidth - 10;
+            }
+            if (left < 20) {
+                left = 20;
+            }
+            
+            // Vertically center with the icon
+            let top = rect.top - 10;
+            
+            // Make sure it doesn't go off screen
+            const tooltipHeight = tooltipContent.offsetHeight || 200;
+            if (top + tooltipHeight > window.innerHeight - 20) {
+                top = window.innerHeight - tooltipHeight - 20;
+            }
+            if (top < 20) {
+                top = 20;
+            }
+            
+            tooltipContent.style.left = `${left}px`;
+            tooltipContent.style.top = `${top}px`;
+        };
+        
+        infoTooltip.addEventListener('mouseenter', positionTooltip);
+        
         infoTooltip.addEventListener('click', (e) => {
             e.stopPropagation();
+            positionTooltip();
             infoTooltip.classList.toggle('active');
         });
         

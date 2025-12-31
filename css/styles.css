@@ -309,7 +309,7 @@ body {
 
 /* Info Tooltip */
 .info-tooltip {
-    position: relative;
+    position: static;
     display: inline-flex;
     align-items: center;
     margin-left: 6px;
@@ -329,40 +329,31 @@ body {
 }
 
 .tooltip-content {
-    position: absolute;
-    top: calc(100% + 10px);
-    left: 0;
-    width: 260px;
-    padding: 14px 16px;
+    position: fixed;
+    width: 280px;
+    padding: 16px;
     background: #1e293b;
-    border: 1px solid rgba(99, 102, 241, 0.4);
+    border: 1px solid rgba(99, 102, 241, 0.5);
     border-radius: 12px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 400;
-    line-height: 1.5;
+    line-height: 1.6;
     color: #cbd5e1;
     text-transform: none;
     letter-spacing: normal;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s ease, visibility 0.2s ease;
-    z-index: 9999;
-}
-
-.tooltip-content::before {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 20px;
-    border: 8px solid transparent;
-    border-bottom-color: #1e293b;
+    z-index: 10000;
+    pointer-events: none;
 }
 
 .info-tooltip:hover .tooltip-content,
 .info-tooltip.active .tooltip-content {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
 }
 
 .tooltip-content strong {
@@ -372,6 +363,10 @@ body {
 .tooltip-content em {
     color: #a5b4fc;
     font-style: normal;
+    display: block;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(99, 102, 241, 0.2);
 }
 
 /* Year Slider */

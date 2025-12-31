@@ -717,6 +717,22 @@ function setupEventListeners() {
             toggleAffordabilityMode();
         }
     });
+
+    // Info tooltip click support (for touch devices)
+    const infoTooltip = document.querySelector('.info-tooltip');
+    if (infoTooltip) {
+        infoTooltip.addEventListener('click', (e) => {
+            e.stopPropagation();
+            infoTooltip.classList.toggle('active');
+        });
+        
+        // Close tooltip when clicking elsewhere
+        document.addEventListener('click', (e) => {
+            if (!infoTooltip.contains(e.target)) {
+                infoTooltip.classList.remove('active');
+            }
+        });
+    }
 }
 
 /**

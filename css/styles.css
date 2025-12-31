@@ -314,27 +314,28 @@ body {
     align-items: center;
     margin-left: 6px;
     color: #64748b;
-    cursor: help;
+    cursor: pointer;
     vertical-align: middle;
+    padding: 2px;
 }
 
 .info-tooltip svg {
     transition: color 0.2s ease;
 }
 
-.info-tooltip:hover svg {
+.info-tooltip:hover svg,
+.info-tooltip.active svg {
     color: #a5b4fc;
 }
 
 .tooltip-content {
     position: absolute;
-    bottom: calc(100% + 10px);
-    left: 50%;
-    transform: translateX(-50%);
+    top: calc(100% + 10px);
+    left: 0;
     width: 260px;
     padding: 14px 16px;
-    background: rgba(15, 23, 42, 0.98);
-    border: 1px solid rgba(99, 102, 241, 0.3);
+    background: #1e293b;
+    border: 1px solid rgba(99, 102, 241, 0.4);
     border-radius: 12px;
     font-size: 0.8rem;
     font-weight: 400;
@@ -342,25 +343,24 @@ body {
     color: #cbd5e1;
     text-transform: none;
     letter-spacing: normal;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s ease, visibility 0.2s ease;
-    z-index: 1001;
-    pointer-events: none;
+    z-index: 9999;
 }
 
-.tooltip-content::after {
+.tooltip-content::before {
     content: '';
     position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 100%;
+    left: 20px;
     border: 8px solid transparent;
-    border-top-color: rgba(15, 23, 42, 0.98);
+    border-bottom-color: #1e293b;
 }
 
-.info-tooltip:hover .tooltip-content {
+.info-tooltip:hover .tooltip-content,
+.info-tooltip.active .tooltip-content {
     opacity: 1;
     visibility: visible;
 }

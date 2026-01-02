@@ -534,7 +534,7 @@ body {
     position: absolute;
     bottom: 30px;
     left: 20px;
-    z-index: 1000;
+    z-index: 900;
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(20px);
     border-radius: 12px;

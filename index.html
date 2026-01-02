@@ -91,7 +91,17 @@
                     <span class="year-range">2000 - 2025</span>
                 </div>
                 <div class="slider-container">
+                    <button class="year-step-btn" id="yearPrev" aria-label="Previous year">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </button>
                     <input type="range" id="yearSlider" class="year-slider" min="2000" max="2025" value="2000">
+                    <button class="year-step-btn" id="yearNext" aria-label="Next year">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
                 </div>
                 <div class="play-controls">
                     <button id="playBtn" class="play-btn">
@@ -149,11 +159,12 @@
         </div>
     </div>
 
-    <!-- Info Panel (shown on hover) -->
+    <!-- Info Panel (shown on hover/tap) -->
     <div class="info-panel" id="infoPanel">
         <div class="info-zip" id="infoZip">ZIP Code</div>
         <div class="info-price" id="infoPrice">$0</div>
         <div class="info-change positive" id="infoChange">+0% since 2000</div>
+        <div class="info-tap-hint">Tap again to zoom</div>
     </div>
 
     <!-- Legend -->

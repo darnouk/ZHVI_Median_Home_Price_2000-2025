@@ -88,6 +88,27 @@ function initMap() {
         maxZoom: 19
     }).addTo(AppState.map);
 
+    // On mobile: tap on empty map area to dismiss info panel and reset highlights
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice) {
+        AppState.map.on('click', (e) => {
+            // Only dismiss if clicking on the base map, not a feature
+            if (e.originalEvent.target.classList.contains('leaflet-container') || 
+                e.originalEvent.target.tagName === 'CANVAS') {
+                Elements.infoPanel.classList.remove('visible');
+                // Reset all highlighted features
+                if (AppState.currentLayer) {
+                    AppState.currentLayer.eachLayer((layer) => {
+                        if (layer._isHighlighted) {
+                            AppState.currentLayer.resetStyle(layer);
+                            layer._isHighlighted = false;
+                        }
+                    });
+                }
+            }
+        });
+    }
+
     buildLegend();
 }
 
@@ -327,11 +348,40 @@ function styleFeature(feature) {
  * @param {Object} layer - Leaflet layer
  */
 function onEachFeature(feature, layer) {
-    layer.on({
-        mouseover: (e) => highlightFeature(e, feature),
-        mouseout: resetHighlight,
-        click: (e) => zoomToFeature(e)
-    });
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    if (isTouchDevice) {
+        // Touch devices: tap to show info, tap again to zoom
+        layer.on({
+            click: (e) => {
+                // If this feature is already highlighted, zoom to it
+                if (layer._isHighlighted) {
+                    zoomToFeature(e);
+                    layer._isHighlighted = false;
+                } else {
+                    // Reset all other highlights first
+                    if (AppState.currentLayer) {
+                        AppState.currentLayer.eachLayer((l) => {
+                            if (l._isHighlighted && l !== layer) {
+                                AppState.currentLayer.resetStyle(l);
+                                l._isHighlighted = false;
+                            }
+                        });
+                    }
+                    // Highlight this feature and show info
+                    highlightFeature(e, feature);
+                    layer._isHighlighted = true;
+                }
+            }
+        });
+    } else {
+        // Desktop: hover to show info, click to zoom
+        layer.on({
+            mouseover: (e) => highlightFeature(e, feature),
+            mouseout: resetHighlight,
+            click: (e) => zoomToFeature(e)
+        });
+    }
 }
 
 /**
@@ -642,6 +692,26 @@ function setupEventListeners() {
         updateYear(e.target.value);
     });
 
+    // Year step buttons (for mobile)
+    const yearPrevBtn = document.getElementById('yearPrev');
+    const yearNextBtn = document.getElementById('yearNext');
+    
+    if (yearPrevBtn) {
+        yearPrevBtn.addEventListener('click', () => {
+            const newYear = Math.max(2000, AppState.currentYear - 1);
+            Elements.yearSlider.value = newYear;
+            updateYear(newYear);
+        });
+    }
+    
+    if (yearNextBtn) {
+        yearNextBtn.addEventListener('click', () => {
+            const newYear = Math.min(2025, AppState.currentYear + 1);
+            Elements.yearSlider.value = newYear;
+            updateYear(newYear);
+        });
+    }
+
     // Play button
     Elements.playBtn.addEventListener('click', togglePlay);
 
@@ -927,6 +997,11 @@ async function init() {
 
     // Set up event listeners
     setupEventListeners();
+
+    // Start with panel collapsed on mobile for better map visibility
+    if (window.innerWidth <= 768) {
+        Elements.controlPanel.classList.add('collapsed');
+    }
 
     console.log('ZHVI Map initialized successfully!');
     console.log('Architecture: Lazy loading - GeoJSON only loaded on state selection');

@@ -64,6 +64,9 @@ function cacheElements() {
     Elements.incomeInput = document.getElementById('incomeInput');
     Elements.affordabilityToggle = document.getElementById('affordabilityToggle');
     Elements.affordabilityInfo = document.getElementById('affordabilityInfo');
+    // Welcome modal
+    Elements.welcomeModal = document.getElementById('welcomeModal');
+    Elements.welcomeClose = document.getElementById('welcomeClose');
 }
 
 /**
@@ -765,6 +768,74 @@ function setupEventListeners() {
         document.addEventListener('click', (e) => {
             if (!infoTooltip.contains(e.target)) {
                 infoTooltip.classList.remove('active');
+            }
+        });
+    }
+
+    // Scale tooltip (Color Scale info)
+    const scaleTooltip = document.querySelector('.scale-tooltip');
+    const scaleTooltipContent = scaleTooltip ? scaleTooltip.querySelector('.tooltip-content') : null;
+    
+    if (scaleTooltip && scaleTooltipContent) {
+        const positionScaleTooltip = () => {
+            const rect = scaleTooltip.getBoundingClientRect();
+            const tooltipWidth = 280;
+            
+            let left = rect.right + 10;
+            if (left + tooltipWidth > window.innerWidth - 20) {
+                left = rect.left - tooltipWidth - 10;
+            }
+            if (left < 20) {
+                left = 20;
+            }
+            
+            let top = rect.top - 10;
+            const tooltipHeight = scaleTooltipContent.offsetHeight || 150;
+            if (top + tooltipHeight > window.innerHeight - 20) {
+                top = window.innerHeight - tooltipHeight - 20;
+            }
+            if (top < 20) {
+                top = 20;
+            }
+            
+            scaleTooltipContent.style.left = `${left}px`;
+            scaleTooltipContent.style.top = `${top}px`;
+        };
+        
+        scaleTooltip.addEventListener('mouseenter', positionScaleTooltip);
+        
+        scaleTooltip.addEventListener('click', (e) => {
+            e.stopPropagation();
+            positionScaleTooltip();
+            scaleTooltip.classList.toggle('active');
+        });
+        
+        document.addEventListener('click', (e) => {
+            if (!scaleTooltip.contains(e.target)) {
+                scaleTooltip.classList.remove('active');
+            }
+        });
+    }
+
+    // Welcome modal
+    if (Elements.welcomeClose && Elements.welcomeModal) {
+        // Check if user has seen the modal before
+        const hasSeenWelcome = localStorage.getItem('zhvi_welcome_seen');
+        
+        if (hasSeenWelcome) {
+            Elements.welcomeModal.classList.add('hidden');
+        }
+        
+        Elements.welcomeClose.addEventListener('click', () => {
+            Elements.welcomeModal.classList.add('hidden');
+            localStorage.setItem('zhvi_welcome_seen', 'true');
+        });
+        
+        // Also close on clicking outside the content
+        Elements.welcomeModal.addEventListener('click', (e) => {
+            if (e.target === Elements.welcomeModal) {
+                Elements.welcomeModal.classList.add('hidden');
+                localStorage.setItem('zhvi_welcome_seen', 'true');
             }
         });
     }

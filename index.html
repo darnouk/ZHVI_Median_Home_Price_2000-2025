@@ -110,6 +110,19 @@
                                 <path d="M7 16l4-8 4 4 6-6"/>
                             </svg>
                             Color Scale
+                            <span class="info-tooltip scale-tooltip">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M12 16v-4"/>
+                                    <path d="M12 8h.01"/>
+                                </svg>
+                                <span class="tooltip-content">
+                                    <strong>State Scale</strong><br>
+                                    Colors are based on the price range within the selected state. Best for seeing variations within a single state.<br><br>
+                                    <strong>National Scale</strong><br>
+                                    Colors use the same scale across all states, based on national price distribution. Best for comparing states to each other.
+                                </span>
+                            </span>
                         </span>
                         <div class="toggle-switch">
                             <button class="toggle-option active" id="scaleState" data-scale="state">State</button>
@@ -157,6 +170,32 @@
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
         <div class="loading-text">Loading...</div>
+    </div>
+
+    <!-- Welcome Modal -->
+    <div class="welcome-modal" id="welcomeModal">
+        <div class="welcome-content">
+            <div class="welcome-header">
+                <span class="welcome-icon">🏠</span>
+                <h2>Welcome to the Home Price Explorer</h2>
+            </div>
+            <div class="welcome-body">
+                <div class="welcome-section">
+                    <h3>📊 About the Data</h3>
+                    <p>This map displays the <strong>Zillow Home Value Index (ZHVI)</strong> — Zillow's smoothed, seasonally adjusted measure of typical home values across the United States.</p>
+                </div>
+                <div class="welcome-section">
+                    <h3>🏡 Single-Family Homes Only</h3>
+                    <p>Data shown is for <strong>single-family residences (SFH)</strong> only. Condos, co-ops, and multi-family properties are excluded to provide a cleaner comparison across regions.</p>
+                </div>
+                <div class="welcome-section">
+                    <h3>📅 Time Range</h3>
+                    <p>Explore median home values from <strong>2000 to 2025</strong> using the year slider. Watch how housing markets evolved over 25 years.</p>
+                </div>
+                <p class="welcome-source">Data source: <a href="https://www.zillow.com/research/data/" target="_blank" rel="noopener">Zillow Research</a></p>
+            </div>
+            <button class="welcome-close" id="welcomeClose">Get Started</button>
+        </div>
     </div>
 
     <!-- External Libraries -->

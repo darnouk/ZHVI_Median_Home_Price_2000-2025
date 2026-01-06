@@ -363,16 +363,30 @@ function highlightFeature(e, feature) {
 
     if (data) {
         const currentPrice = parseFloat(data[AppState.currentYear]) || 0;
-        const basePrice = parseFloat(data['2000']) || 0;
+        
+        // Find the earliest year with data for this ZIP code
+        let earliestYear = null;
+        let basePrice = 0;
+        for (let year = 2000; year <= AppState.currentYear; year++) {
+            const price = parseFloat(data[year]);
+            if (price > 0) {
+                earliestYear = year;
+                basePrice = price;
+                break;
+            }
+        }
         
         Elements.infoZip.textContent = `ZIP Code: ${zip}`;
         Elements.infoPrice.textContent = formatCurrency(currentPrice);
         
-        if (basePrice > 0 && currentPrice > 0) {
+        if (basePrice > 0 && currentPrice > 0 && earliestYear !== null && earliestYear < AppState.currentYear) {
             const change = ((currentPrice - basePrice) / basePrice * 100).toFixed(1);
             const isPositive = change >= 0;
-            Elements.infoChange.textContent = `${isPositive ? '+' : ''}${change}% since 2000`;
+            Elements.infoChange.textContent = `${isPositive ? '+' : ''}${change}% since ${earliestYear}`;
             Elements.infoChange.className = `info-change ${isPositive ? 'positive' : 'negative'}`;
+        } else if (earliestYear === AppState.currentYear) {
+            Elements.infoChange.textContent = 'First year of data';
+            Elements.infoChange.className = 'info-change';
         } else {
             Elements.infoChange.textContent = 'No historical data';
             Elements.infoChange.className = 'info-change';

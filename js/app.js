@@ -332,11 +332,88 @@ function onEachFeature(feature, layer) {
         mouseover: (e) => highlightFeature(e, feature),
         mouseout: resetHighlight,
         click: (e) => {
-            // On click/tap, show info and zoom
-            highlightFeature(e, feature);
-            zoomToFeature(e);
+            // On click/tap, show popup with full history
+            showPriceHistoryPopup(e, feature);
         }
     });
+}
+
+/**
+ * Generate and show popup with full price history
+ * @param {Object} e - Leaflet event
+ * @param {Object} feature - GeoJSON feature
+ */
+function showPriceHistoryPopup(e, feature) {
+    const zip = feature.properties.ZCTA5CE10;
+    const data = AppState.zhviData[zip];
+    
+    let popupContent = `<div class="price-history-popup">`;
+    popupContent += `<div class="popup-header">📍 ZIP Code ${zip}</div>`;
+    
+    if (data) {
+        // Find years with data
+        const yearsWithData = [];
+        for (let year = 2000; year <= 2025; year++) {
+            const price = parseFloat(data[year]);
+            if (price > 0) {
+                yearsWithData.push({ year, price });
+            }
+        }
+        
+        if (yearsWithData.length > 0) {
+            // Calculate overall change
+            const firstYear = yearsWithData[0];
+            const lastYear = yearsWithData[yearsWithData.length - 1];
+            const overallChange = ((lastYear.price - firstYear.price) / firstYear.price * 100).toFixed(1);
+            const isPositive = overallChange >= 0;
+            
+            popupContent += `<div class="popup-summary">`;
+            popupContent += `<span class="popup-current">${formatCurrency(lastYear.price)}</span>`;
+            popupContent += `<span class="popup-change ${isPositive ? 'positive' : 'negative'}">${isPositive ? '+' : ''}${overallChange}% since ${firstYear.year}</span>`;
+            popupContent += `</div>`;
+            
+            popupContent += `<div class="popup-divider"></div>`;
+            popupContent += `<div class="popup-title">Price History</div>`;
+            popupContent += `<div class="popup-grid">`;
+            
+            // Show all years with data in a grid
+            yearsWithData.forEach((item, index) => {
+                // Calculate year-over-year change
+                let yoyChange = '';
+                if (index > 0) {
+                    const prevPrice = yearsWithData[index - 1].price;
+                    const change = ((item.price - prevPrice) / prevPrice * 100).toFixed(1);
+                    const yoyPositive = change >= 0;
+                    yoyChange = `<span class="yoy-change ${yoyPositive ? 'positive' : 'negative'}">${yoyPositive ? '+' : ''}${change}%</span>`;
+                }
+                
+                const isCurrentYear = item.year === AppState.currentYear;
+                popupContent += `<div class="popup-row ${isCurrentYear ? 'current-year' : ''}">`;
+                popupContent += `<span class="popup-year">${item.year}</span>`;
+                popupContent += `<span class="popup-price">${formatCurrency(item.price)}</span>`;
+                popupContent += yoyChange;
+                popupContent += `</div>`;
+            });
+            
+            popupContent += `</div>`;
+        } else {
+            popupContent += `<div class="popup-no-data">No price data available</div>`;
+        }
+    } else {
+        popupContent += `<div class="popup-no-data">No data available for this ZIP code</div>`;
+    }
+    
+    popupContent += `</div>`;
+    
+    // Create and open popup
+    L.popup({
+        maxWidth: 300,
+        minWidth: 200,
+        className: 'price-history-popup-container'
+    })
+    .setLatLng(e.latlng)
+    .setContent(popupContent)
+    .openOn(AppState.map);
 }
 
 /**

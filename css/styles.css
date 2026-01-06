@@ -741,9 +741,10 @@ body {
 }
 
 .popup-grid {
-    max-height: 300px;
+    max-height: 350px;
     overflow-y: auto;
     padding-right: 4px;
+    padding-bottom: 8px;
 }
 
 .popup-grid::-webkit-scrollbar {

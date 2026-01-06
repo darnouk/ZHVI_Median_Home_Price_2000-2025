@@ -166,6 +166,51 @@
         <div class="info-change positive" id="infoChange">+0% since 2000</div>
     </div>
 
+    <!-- Compare Panel (desktop only) -->
+    <div class="compare-panel" id="comparePanel">
+        <div class="compare-header">
+            <h3 class="compare-title">📊 Compare ZIP Codes</h3>
+            <button class="compare-close" id="compareClose" aria-label="Close comparison">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="compare-inputs">
+            <div class="compare-input-group">
+                <label class="compare-label">ZIP Code 1</label>
+                <div class="compare-input-row">
+                    <input type="text" id="compareZip1" class="compare-input" placeholder="Enter ZIP..." maxlength="5" inputmode="numeric">
+                    <button class="compare-add-btn" id="compareAdd1" title="Add to comparison">+</button>
+                </div>
+            </div>
+            <div class="compare-vs">VS</div>
+            <div class="compare-input-group">
+                <label class="compare-label">ZIP Code 2</label>
+                <div class="compare-input-row">
+                    <input type="text" id="compareZip2" class="compare-input" placeholder="Enter ZIP..." maxlength="5" inputmode="numeric">
+                    <button class="compare-add-btn" id="compareAdd2" title="Add to comparison">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="compare-error" id="compareError"></div>
+        <div class="compare-results" id="compareResults">
+            <div class="compare-placeholder">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 3v18h18"/>
+                    <path d="M7 16l4-8 4 4 6-6"/>
+                </svg>
+                <p>Enter two ZIP codes to compare their price history</p>
+            </div>
+        </div>
+        <button class="compare-toggle" id="compareToggle" title="Compare ZIP Codes">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3v18h18"/>
+                <path d="M7 16l4-8 4 4 6-6"/>
+            </svg>
+        </button>
+    </div>
+
     <!-- Legend -->
     <div class="legend">
         <div class="legend-title">Median Home Value</div>

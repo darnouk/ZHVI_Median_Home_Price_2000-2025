@@ -25,7 +25,9 @@ const AppState = {
     // Affordability feature
     affordabilityMode: false,
     maxAffordablePrice: null,  // Calculated from income (3.5x multiplier)
-    AFFORDABILITY_MULTIPLIER: 3.5  // Standard mortgage qualification rule
+    AFFORDABILITY_MULTIPLIER: 3.5,  // Standard mortgage qualification rule
+    // Comparison feature
+    compareZips: { zip1: null, zip2: null }
 };
 
 // DOM element cache
@@ -67,6 +69,16 @@ function cacheElements() {
     // Welcome modal
     Elements.welcomeModal = document.getElementById('welcomeModal');
     Elements.welcomeClose = document.getElementById('welcomeClose');
+    // Compare panel elements
+    Elements.comparePanel = document.getElementById('comparePanel');
+    Elements.compareToggle = document.getElementById('compareToggle');
+    Elements.compareClose = document.getElementById('compareClose');
+    Elements.compareZip1 = document.getElementById('compareZip1');
+    Elements.compareZip2 = document.getElementById('compareZip2');
+    Elements.compareAdd1 = document.getElementById('compareAdd1');
+    Elements.compareAdd2 = document.getElementById('compareAdd2');
+    Elements.compareError = document.getElementById('compareError');
+    Elements.compareResults = document.getElementById('compareResults');
 }
 
 /**
@@ -575,6 +587,12 @@ async function renderState(stateAbbr) {
     if (AppState.affordabilityMode) {
         updateAffordabilityDisplay();
     }
+    
+    // Clear comparison when state changes (ZIPs are state-specific)
+    AppState.compareZips = { zip1: null, zip2: null };
+    if (Elements.compareZip1) Elements.compareZip1.value = '';
+    if (Elements.compareZip2) Elements.compareZip2.value = '';
+    if (Elements.compareResults) updateComparisonResults();
 }
 
 /**
@@ -596,6 +614,11 @@ function updateYear(year) {
         // Update affordability display if active
         if (AppState.affordabilityMode) {
             updateAffordabilityDisplay();
+        }
+        
+        // Update comparison if active
+        if (AppState.compareZips.zip1 || AppState.compareZips.zip2) {
+            updateComparisonResults();
         }
     }
 }
@@ -1024,6 +1047,259 @@ function updateAffordabilityDisplay() {
 }
 
 /**
+ * Add a ZIP code to comparison
+ * @param {string} zip - ZIP code to add
+ * @param {number} slot - Which slot (1 or 2)
+ */
+function addToComparison(zip, slot) {
+    // Validate ZIP
+    if (!zip || zip.length !== 5) {
+        Elements.compareError.textContent = 'Please enter a valid 5-digit ZIP code';
+        return;
+    }
+
+    // Check if ZIP exists in current state
+    const data = AppState.zhviData[zip];
+    if (!data) {
+        Elements.compareError.textContent = 'ZIP code not found in database';
+        return;
+    }
+
+    // Check if ZIP is in current state's GeoJSON
+    if (AppState.currentGeoJSON) {
+        const inState = AppState.currentGeoJSON.features.some(
+            f => f.properties.ZCTA5CE10 === zip
+        );
+        if (!inState) {
+            Elements.compareError.textContent = 'ZIP code not in current state';
+            return;
+        }
+    }
+
+    // Add to comparison
+    if (slot === 1) {
+        AppState.compareZips.zip1 = zip;
+        Elements.compareZip1.value = zip;
+    } else {
+        AppState.compareZips.zip2 = zip;
+        Elements.compareZip2.value = zip;
+    }
+
+    Elements.compareError.textContent = '';
+    updateComparisonResults();
+}
+
+/**
+ * Get ZIP code statistics for comparison
+ * @param {string} zip - ZIP code
+ * @returns {Object} Statistics object
+ */
+function getZipStats(zip) {
+    const data = AppState.zhviData[zip];
+    if (!data) return null;
+
+    const yearsWithData = [];
+    for (let year = 2000; year <= 2025; year++) {
+        const price = parseFloat(data[year]);
+        if (price > 0) {
+            yearsWithData.push({ year, price });
+        }
+    }
+
+    if (yearsWithData.length === 0) return null;
+
+    const firstYear = yearsWithData[0];
+    const lastYear = yearsWithData[yearsWithData.length - 1];
+    const currentYearData = yearsWithData.find(y => y.year === AppState.currentYear);
+    const currentPrice = currentYearData ? currentYearData.price : lastYear.price;
+
+    // Calculate various stats
+    const overallChange = ((lastYear.price - firstYear.price) / firstYear.price * 100);
+    const avgYearlyChange = overallChange / (lastYear.year - firstYear.year);
+    
+    // Find peak price
+    const peak = yearsWithData.reduce((max, y) => y.price > max.price ? y : max, yearsWithData[0]);
+    
+    // Find lowest price
+    const lowest = yearsWithData.reduce((min, y) => y.price < min.price ? y : min, yearsWithData[0]);
+
+    return {
+        zip,
+        currentPrice,
+        firstYear: firstYear.year,
+        firstPrice: firstYear.price,
+        lastYear: lastYear.year,
+        lastPrice: lastYear.price,
+        overallChange,
+        avgYearlyChange,
+        peakYear: peak.year,
+        peakPrice: peak.price,
+        lowestYear: lowest.year,
+        lowestPrice: lowest.price,
+        dataYears: yearsWithData.length
+    };
+}
+
+/**
+ * Update the comparison results display
+ */
+function updateComparisonResults() {
+    const { zip1, zip2 } = AppState.compareZips;
+
+    // If neither ZIP is set, show placeholder
+    if (!zip1 && !zip2) {
+        Elements.compareResults.innerHTML = `
+            <div class="compare-placeholder">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 3v18h18"/>
+                    <path d="M7 16l4-8 4 4 6-6"/>
+                </svg>
+                <p>Enter two ZIP codes to compare their price history</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '<div class="compare-cards">';
+
+    // ZIP 1 card
+    if (zip1) {
+        const stats1 = getZipStats(zip1);
+        if (stats1) {
+            html += generateCompareCard(stats1, 'zip1');
+        }
+    }
+
+    // ZIP 2 card
+    if (zip2) {
+        const stats2 = getZipStats(zip2);
+        if (stats2) {
+            html += generateCompareCard(stats2, 'zip2');
+        }
+    }
+
+    // Difference card (only if both ZIPs are set)
+    if (zip1 && zip2) {
+        const stats1 = getZipStats(zip1);
+        const stats2 = getZipStats(zip2);
+        if (stats1 && stats2) {
+            const priceDiff = stats1.currentPrice - stats2.currentPrice;
+            const percentDiff = ((priceDiff / stats2.currentPrice) * 100).toFixed(1);
+            const isHigher = priceDiff > 0;
+
+            html += `
+                <div class="compare-diff">
+                    <div class="compare-diff-title">Price Difference (${AppState.currentYear})</div>
+                    <div class="compare-diff-value ${isHigher ? 'higher' : 'lower'}">
+                        ${isHigher ? '+' : ''}${formatCurrency(Math.abs(priceDiff))}
+                    </div>
+                    <div class="compare-diff-label">
+                        ZIP ${zip1} is ${Math.abs(percentDiff)}% ${isHigher ? 'higher' : 'lower'} than ZIP ${zip2}
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    html += '</div>';
+    Elements.compareResults.innerHTML = html;
+}
+
+/**
+ * Generate HTML for a comparison card
+ * @param {Object} stats - ZIP statistics
+ * @param {string} className - CSS class (zip1 or zip2)
+ * @returns {string} HTML string
+ */
+function generateCompareCard(stats, className) {
+    const changeClass = stats.overallChange >= 0 ? 'positive' : 'negative';
+    const changeSign = stats.overallChange >= 0 ? '+' : '';
+
+    return `
+        <div class="compare-card ${className}">
+            <div class="compare-card-header">
+                <span class="compare-card-zip">📍 ${stats.zip}</span>
+                <span class="compare-card-price">${formatCurrency(stats.currentPrice)}</span>
+            </div>
+            <div class="compare-card-change ${changeClass}">
+                ${changeSign}${stats.overallChange.toFixed(1)}% since ${stats.firstYear}
+            </div>
+            <div class="compare-card-stats">
+                <div class="compare-stat">
+                    <span>Peak</span>
+                    <span class="compare-stat-value">${formatCurrency(stats.peakPrice)} (${stats.peakYear})</span>
+                </div>
+                <div class="compare-stat">
+                    <span>Lowest</span>
+                    <span class="compare-stat-value">${formatCurrency(stats.lowestPrice)} (${stats.lowestYear})</span>
+                </div>
+                <div class="compare-stat">
+                    <span>Avg/Year</span>
+                    <span class="compare-stat-value">${stats.avgYearlyChange >= 0 ? '+' : ''}${stats.avgYearlyChange.toFixed(1)}%</span>
+                </div>
+                <div class="compare-stat">
+                    <span>Data Years</span>
+                    <span class="compare-stat-value">${stats.dataYears} years</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Set up comparison panel event listeners
+ */
+function setupCompareListeners() {
+    if (!Elements.comparePanel) return;
+
+    // Toggle panel open/closed
+    Elements.compareToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        Elements.comparePanel.classList.remove('collapsed');
+    });
+
+    Elements.compareClose.addEventListener('click', () => {
+        Elements.comparePanel.classList.add('collapsed');
+    });
+
+    // Input validation
+    Elements.compareZip1.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5);
+        Elements.compareError.textContent = '';
+    });
+
+    Elements.compareZip2.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5);
+        Elements.compareError.textContent = '';
+    });
+
+    // Add buttons
+    Elements.compareAdd1.addEventListener('click', () => {
+        addToComparison(Elements.compareZip1.value, 1);
+    });
+
+    Elements.compareAdd2.addEventListener('click', () => {
+        addToComparison(Elements.compareZip2.value, 2);
+    });
+
+    // Enter key support
+    Elements.compareZip1.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            addToComparison(Elements.compareZip1.value, 1);
+        }
+    });
+
+    Elements.compareZip2.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            addToComparison(Elements.compareZip2.value, 2);
+        }
+    });
+
+    // Start collapsed
+    Elements.comparePanel.classList.add('collapsed');
+}
+
+/**
  * Initialize the application
  */
 async function init() {
@@ -1043,6 +1319,9 @@ async function init() {
 
     // Set up event listeners
     setupEventListeners();
+    
+    // Set up compare panel (desktop only)
+    setupCompareListeners();
 
     console.log('ZHVI Map initialized successfully!');
     console.log('Architecture: Lazy loading - GeoJSON only loaded on state selection');

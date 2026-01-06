@@ -775,20 +775,10 @@ body {
     background: rgba(255, 255, 255, 0.05);
 }
 
-.popup-row.current-year {
-    background: rgba(99, 102, 241, 0.2);
-    border: 1px solid rgba(99, 102, 241, 0.4);
-}
-
 .popup-year {
     font-size: 0.8rem;
     font-weight: 500;
     color: #94a3b8;
-}
-
-.popup-row.current-year .popup-year {
-    color: #a5b4fc;
-    font-weight: 600;
 }
 
 .popup-price {

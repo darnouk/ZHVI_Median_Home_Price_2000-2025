@@ -399,8 +399,7 @@ function showPriceHistoryPopup(e, feature) {
                     yoyChange = `<span class="yoy-change ${yoyPositive ? 'positive' : 'negative'}">${yoyPositive ? '+' : ''}${change}%</span>`;
                 }
                 
-                const isCurrentYear = item.year === AppState.currentYear;
-                popupContent += `<div class="popup-row ${isCurrentYear ? 'current-year' : ''}">`;
+                popupContent += `<div class="popup-row">`;
                 popupContent += `<span class="popup-year">${item.year}</span>`;
                 popupContent += `<span class="popup-price">${formatCurrency(item.price)}</span>`;
                 popupContent += yoyChange;

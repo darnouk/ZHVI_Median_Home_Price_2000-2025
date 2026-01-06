@@ -961,22 +961,36 @@ function setupEventListeners() {
         // Check if user has seen the modal before
         const hasSeenWelcome = localStorage.getItem('zhvi_welcome_seen');
         
-        if (hasSeenWelcome) {
-            Elements.welcomeModal.classList.add('hidden');
+        // Show modal only if user hasn't seen it before
+        if (!hasSeenWelcome) {
+            Elements.welcomeModal.classList.remove('hidden');
         }
         
-        Elements.welcomeClose.addEventListener('click', () => {
+        const closeWelcomeModal = () => {
             Elements.welcomeModal.classList.add('hidden');
             localStorage.setItem('zhvi_welcome_seen', 'true');
+        };
+        
+        Elements.welcomeClose.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeWelcomeModal();
         });
         
         // Also close on clicking outside the content
         Elements.welcomeModal.addEventListener('click', (e) => {
+            // Only close if clicking the backdrop, not the content
             if (e.target === Elements.welcomeModal) {
-                Elements.welcomeModal.classList.add('hidden');
-                localStorage.setItem('zhvi_welcome_seen', 'true');
+                closeWelcomeModal();
             }
         });
+        
+        // Prevent clicks inside content from bubbling to modal backdrop
+        const welcomeContent = Elements.welcomeModal.querySelector('.welcome-content');
+        if (welcomeContent) {
+            welcomeContent.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
     }
 }
 

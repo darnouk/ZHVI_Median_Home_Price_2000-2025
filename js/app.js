@@ -1334,29 +1334,8 @@ async function init() {
     // Set up compare panel (desktop only)
     setupCompareListeners();
 
-    // Ensure welcome modal can be shown via About button
-    setupAboutButton();
-
     console.log('ZHVI Map initialized successfully!');
     console.log('Architecture: Lazy loading - GeoJSON only loaded on state selection');
-}
-
-// Add About button behavior: show welcome modal on click if not previously dismissed
-function showWelcomeModal(force = false) {
-    const hasSeen = localStorage.getItem('zhvi_welcome_seen');
-    if (hasSeen && !force) return;
-    const modal = document.getElementById('welcomeModal');
-    if (modal) modal.classList.remove('hidden');
-}
-
-// Ensure About button opens modal
-function setupAboutButton() {
-    const aboutBtn = document.getElementById('aboutBtn');
-    if (!aboutBtn) return;
-    aboutBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showWelcomeModal(true);
-    });
 }
 
 // Start the application

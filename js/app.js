@@ -76,6 +76,8 @@ function cacheElements() {
     Elements.compareZip1 = document.getElementById('compareZip1');
     Elements.compareZip2 = document.getElementById('compareZip2');
     Elements.compareZip3 = document.getElementById('compareZip3');
+    Elements.compareAddThird = document.getElementById('compareAddThird');
+    Elements.compareThirdGroup = document.getElementById('compareThirdGroup');
     Elements.compareGenerateBtn = document.getElementById('compareGenerateBtn');
     Elements.compareError = document.getElementById('compareError');
     Elements.compareResults = document.getElementById('compareResults');
@@ -587,12 +589,8 @@ async function renderState(stateAbbr) {
         updateAffordabilityDisplay();
     }
     
-    // Clear comparison when state changes (ZIPs are state-specific)
-    AppState.compareZips = { zip1: null, zip2: null, zip3: null };
-    if (Elements.compareZip1) Elements.compareZip1.value = '';
-    if (Elements.compareZip2) Elements.compareZip2.value = '';
-    if (Elements.compareZip3) Elements.compareZip3.value = '';
-    if (Elements.compareResults) updateComparisonResults();
+    // Note: Comparison inputs are NOT cleared on state change
+    // Users can compare ZIP codes from any state
 }
 
 /**
@@ -1085,7 +1083,7 @@ function generateComparison(zip1, zip2, zip3) {
         return;
     }
 
-    // Check if ZIPs exist in database
+    // Check if ZIPs exist in database (no state restriction - compare any ZIPs)
     const data1 = AppState.zhviData[zip1];
     const data2 = AppState.zhviData[zip2];
     const data3 = zip3 ? AppState.zhviData[zip3] : null;
@@ -1103,34 +1101,6 @@ function generateComparison(zip1, zip2, zip3) {
     if (zip3 && !data3) {
         Elements.compareError.textContent = `ZIP ${zip3} not found in database`;
         return;
-    }
-
-    // Check if ZIPs are in current state's GeoJSON
-    if (AppState.currentGeoJSON) {
-        const zip1InState = AppState.currentGeoJSON.features.some(
-            f => f.properties.ZCTA5CE10 === zip1
-        );
-        const zip2InState = AppState.currentGeoJSON.features.some(
-            f => f.properties.ZCTA5CE10 === zip2
-        );
-        const zip3InState = zip3 ? AppState.currentGeoJSON.features.some(
-            f => f.properties.ZCTA5CE10 === zip3
-        ) : true;
-        
-        if (!zip1InState) {
-            Elements.compareError.textContent = `ZIP ${zip1} not in current state`;
-            return;
-        }
-        
-        if (!zip2InState) {
-            Elements.compareError.textContent = `ZIP ${zip2} not in current state`;
-            return;
-        }
-
-        if (zip3 && !zip3InState) {
-            Elements.compareError.textContent = `ZIP ${zip3} not in current state`;
-            return;
-        }
     }
 
     // Store comparison
@@ -1589,6 +1559,13 @@ function setupCompareListeners() {
     Elements.compareZip3.addEventListener('input', (e) => {
         e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5);
         Elements.compareError.textContent = '';
+    });
+
+    // Add third ZIP code button
+    Elements.compareAddThird.addEventListener('click', () => {
+        Elements.compareAddThird.classList.add('hidden');
+        Elements.compareThirdGroup.classList.remove('hidden');
+        Elements.compareZip3.focus();
     });
 
     // Generate button

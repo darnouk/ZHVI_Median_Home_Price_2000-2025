@@ -186,10 +186,17 @@
                 <label class="compare-label">ZIP Code 2</label>
                 <input type="text" id="compareZip2" class="compare-input" placeholder="Enter ZIP..." maxlength="5" inputmode="numeric">
             </div>
-            <div class="compare-vs">VS</div>
-            <div class="compare-input-group">
-                <label class="compare-label">ZIP Code 3 <span class="optional-label">(optional)</span></label>
-                <input type="text" id="compareZip3" class="compare-input" placeholder="Enter ZIP..." maxlength="5" inputmode="numeric">
+            <button class="compare-add-third" id="compareAddThird" title="Add a third ZIP code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+            </button>
+            <div class="compare-third-group hidden" id="compareThirdGroup">
+                <div class="compare-vs">VS</div>
+                <div class="compare-input-group">
+                    <label class="compare-label">ZIP Code 3</label>
+                    <input type="text" id="compareZip3" class="compare-input" placeholder="Enter ZIP..." maxlength="5" inputmode="numeric">
+                </div>
             </div>
         </div>
         <button class="compare-generate-btn" id="compareGenerateBtn">Generate Graph</button>

@@ -1174,8 +1174,9 @@ function getZipStats(zip) {
 function updateComparisonResults() {
     const { zip1, zip2 } = AppState.compareZips;
 
-    // If neither ZIP is set, show placeholder
+    // If neither ZIP is set, show placeholder and collapse panel width
     if (!zip1 && !zip2) {
+        Elements.comparePanel.classList.remove('expanded');
         Elements.compareResults.innerHTML = `
             <div class="compare-placeholder">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -1190,9 +1191,13 @@ function updateComparisonResults() {
 
     // Chart container (only if both ZIPs are set)
     if (zip1 && zip2) {
+        // Expand panel for better chart visibility
+        Elements.comparePanel.classList.add('expanded');
         Elements.compareResults.innerHTML = '<div class="compare-chart-container"><canvas id="compareChart"></canvas></div>';
-        drawComparisonChart(zip1, zip2);
+        // Small delay to allow panel to expand before drawing
+        setTimeout(() => drawComparisonChart(zip1, zip2), 50);
     } else {
+        Elements.comparePanel.classList.remove('expanded');
         Elements.compareResults.innerHTML = `
             <div class="compare-placeholder">
                 <p>Please enter both ZIP codes to generate comparison</p>
@@ -1237,8 +1242,9 @@ function drawComparisonChart(zip1, zip2) {
 
     // Set canvas size with proper DPI scaling
     const dpr = window.devicePixelRatio || 1;
-    const displayWidth = canvas.parentElement.clientWidth - 40;
-    const displayHeight = 320;
+    const containerWidth = canvas.parentElement.clientWidth;
+    const displayWidth = containerWidth - 20;
+    const displayHeight = 280;
     
     canvas.width = displayWidth * dpr;
     canvas.height = displayHeight * dpr;
@@ -1247,8 +1253,8 @@ function drawComparisonChart(zip1, zip2) {
     
     ctx.scale(dpr, dpr);
 
-    // Chart dimensions with more padding for labels
-    const padding = { top: 50, right: 30, bottom: 60, left: 80 };
+    // Chart dimensions with proper padding
+    const padding = { top: 60, right: 25, bottom: 45, left: 65 };
     const chartWidth = displayWidth - padding.left - padding.right;
     const chartHeight = displayHeight - padding.top - padding.bottom;
 
@@ -1271,7 +1277,7 @@ function drawComparisonChart(zip1, zip2) {
     // Draw grid lines (horizontal only)
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 1;
-    const gridLines = 6;
+    const gridLines = 5;
     for (let i = 0; i <= gridLines; i++) {
         const y = padding.top + (chartHeight / gridLines) * i;
         ctx.beginPath();
@@ -1282,28 +1288,28 @@ function drawComparisonChart(zip1, zip2) {
 
     // Draw Y-axis labels (prices)
     ctx.fillStyle = '#94a3b8';
-    ctx.font = '13px -apple-system, system-ui, sans-serif';
+    ctx.font = '12px -apple-system, system-ui, sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     for (let i = 0; i <= gridLines; i++) {
         const price = minPrice + (maxPrice - minPrice) * (1 - i / gridLines);
         const y = padding.top + (chartHeight / gridLines) * i;
-        ctx.fillText(formatCurrency(price), padding.left - 12, y);
+        ctx.fillText(formatCurrency(price), padding.left - 10, y);
     }
 
-    // Draw X-axis labels (years) - show every 5 years + current year
+    // Draw X-axis labels (years) - show 2000, 2010, 2020, and last year
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     years.forEach((year, index) => {
-        if (year % 5 === 0 || year === years[years.length - 1]) {
+        if (year === 2000 || year === 2010 || year === 2020 || year === years[years.length - 1]) {
             const x = getX(index);
-            ctx.fillText(year.toString(), x, displayHeight - padding.bottom + 15);
+            ctx.fillText(year.toString(), x, displayHeight - padding.bottom + 10);
         }
     });
 
     // Draw line for ZIP 1 (brighter red)
     ctx.strokeStyle = '#ff4444';
-    ctx.lineWidth = 3.5;
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.shadowColor = 'rgba(255, 68, 68, 0.3)';
@@ -1353,16 +1359,10 @@ function drawComparisonChart(zip1, zip2) {
             const x = getX(index);
             const y = getY(price);
             
-            // Outer glow
-            ctx.fillStyle = 'rgba(255, 68, 68, 0.3)';
-            ctx.beginPath();
-            ctx.arc(x, y, 6, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            // Inner dot
+            // Inner dot only
             ctx.fillStyle = '#ff4444';
             ctx.beginPath();
-            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+            ctx.arc(x, y, 3, 0, 2 * Math.PI);
             ctx.fill();
         }
     });
@@ -1373,45 +1373,42 @@ function drawComparisonChart(zip1, zip2) {
             const x = getX(index);
             const y = getY(price);
             
-            // Outer glow
-            ctx.fillStyle = 'rgba(68, 136, 255, 0.3)';
-            ctx.beginPath();
-            ctx.arc(x, y, 6, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            // Inner dot
+            // Inner dot only
             ctx.fillStyle = '#4488ff';
             ctx.beginPath();
-            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+            ctx.arc(x, y, 3, 0, 2 * Math.PI);
             ctx.fill();
         }
     });
 
     // Title
     ctx.fillStyle = '#f8fafc';
-    ctx.font = 'bold 18px -apple-system, system-ui, sans-serif';
+    ctx.font = 'bold 16px -apple-system, system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText('Price History Comparison', displayWidth / 2, 15);
+    ctx.fillText('Price History Comparison', displayWidth / 2, 10);
 
-    // Legend with color-coded ZIP labels
-    ctx.textAlign = 'left';
-    ctx.font = '15px -apple-system, system-ui, sans-serif';
+    // Legend with color-coded ZIP labels - centered below title
+    ctx.font = 'bold 13px -apple-system, system-ui, sans-serif';
     ctx.textBaseline = 'middle';
     
-    const legendY = 40;
-    const legendStartX = displayWidth / 2 - 110;
+    const legendY = 35;
+    const legendSpacing = 120;
+    const legendStartX = displayWidth / 2 - legendSpacing / 2 - 50;
     
     // ZIP 1 legend - RED
     ctx.fillStyle = '#ff4444';
-    ctx.fillRect(legendStartX, legendY - 2, 35, 4);
-    ctx.font = 'bold 15px -apple-system, system-ui, sans-serif';
-    ctx.fillText(`ZIP ${zip1}`, legendStartX + 43, legendY);
+    ctx.beginPath();
+    ctx.arc(legendStartX, legendY, 5, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillText(zip1, legendStartX + 12, legendY);
     
     // ZIP 2 legend - BLUE
     ctx.fillStyle = '#4488ff';
-    ctx.fillRect(legendStartX + 130, legendY - 2, 35, 4);
-    ctx.fillText(`ZIP ${zip2}`, legendStartX + 173, legendY);
+    ctx.beginPath();
+    ctx.arc(legendStartX + legendSpacing, legendY, 5, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillText(zip2, legendStartX + legendSpacing + 12, legendY);
 }
 
 /**

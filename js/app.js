@@ -27,7 +27,9 @@ const AppState = {
     maxAffordablePrice: null,  // Calculated from income (3.5x multiplier)
     AFFORDABILITY_MULTIPLIER: 3.5,  // Standard mortgage qualification rule
     // Comparison feature
-    compareZips: { zip1: null, zip2: null, zip3: null }
+    compareZips: { zip1: null, zip2: null, zip3: null },
+    // Last searched ZIP (for updating display on year change)
+    lastSearchedZip: null
 };
 
 // DOM element cache
@@ -619,6 +621,23 @@ function updateYear(year) {
         if (AppState.compareZips.zip1 || AppState.compareZips.zip2) {
             updateComparisonResults();
         }
+        
+        // Update search result display if a ZIP was searched
+        updateSearchResultDisplay();
+    }
+}
+
+/**
+ * Update the search result display when year changes
+ */
+function updateSearchResultDisplay() {
+    // Only update if there's a success message showing (last searched ZIP)
+    if (AppState.lastSearchedZip && Elements.searchError.classList.contains('success')) {
+        const data = AppState.zhviData[AppState.lastSearchedZip];
+        if (data) {
+            const price = parseFloat(data[AppState.currentYear]) || 0;
+            Elements.searchError.textContent = `Found! ${formatCurrency(price)} in ${AppState.currentYear}`;
+        }
     }
 }
 
@@ -680,6 +699,9 @@ function togglePlay() {
  * @param {string} zip - 5-digit ZIP code
  */
 async function searchZipCode(zip) {
+    // Clear last searched ZIP at start of new search
+    AppState.lastSearchedZip = null;
+    
     // Validate input
     if (!zip || zip.length !== 5) {
         Elements.searchError.textContent = 'Please enter a valid 5-digit ZIP code';
@@ -726,9 +748,12 @@ async function searchZipCode(zip) {
                 const price = parseFloat(data[AppState.currentYear]) || 0;
                 Elements.searchError.textContent = `Found! ${formatCurrency(price)} in ${AppState.currentYear}`;
                 Elements.searchError.className = 'search-error success';
+                // Store the searched ZIP for updating on year change
+                AppState.lastSearchedZip = zip;
             } else {
                 Elements.searchError.textContent = 'ZIP found but no price data available';
                 Elements.searchError.className = 'search-error';
+                AppState.lastSearchedZip = null;
             }
 
             // Reset highlight after 3 seconds
@@ -791,6 +816,8 @@ function setupEventListeners() {
     Elements.zipSearch.addEventListener('input', (e) => {
         e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5);
         Elements.searchError.textContent = '';
+        // Clear last searched ZIP when user modifies input
+        AppState.lastSearchedZip = null;
     });
 
     // ZIP search - button click

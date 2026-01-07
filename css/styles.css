@@ -1090,8 +1090,8 @@ body {
         left: 0;
         right: 0;
         width: 100%;
-        max-height: 85vh;
-        border-radius: 20px 20px 0 0;
+        max-height: 80vh;
+        border-radius: 16px 16px 0 0;
         transform: translateY(100%);
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 1500;
@@ -1106,9 +1106,9 @@ body {
         width: auto;
         height: auto;
         top: auto;
-        bottom: 80px;
+        bottom: 60px;
         left: auto;
-        right: 16px;
+        right: 12px;
         border-radius: 50%;
         transform: none;
         overflow: visible;
@@ -1119,15 +1119,15 @@ body {
         position: relative;
         top: 0;
         right: 0;
-        width: 56px;
-        height: 56px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
     }
 
     .compare-panel.collapsed .compare-toggle svg {
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
     }
 
     .compare-panel:not(.collapsed) .compare-toggle {
@@ -1135,7 +1135,7 @@ body {
     }
 
     .compare-header {
-        padding: 20px 20px 16px;
+        padding: 14px 16px 12px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         position: relative;
     }
@@ -1143,96 +1143,96 @@ body {
     .compare-header::before {
         content: '';
         position: absolute;
-        top: 8px;
+        top: 6px;
         left: 50%;
         transform: translateX(-50%);
-        width: 40px;
-        height: 4px;
+        width: 32px;
+        height: 3px;
         background: rgba(255, 255, 255, 0.3);
         border-radius: 2px;
     }
 
     .compare-title {
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         text-align: center;
-        margin-top: 8px;
+        margin-top: 4px;
     }
 
     .compare-close {
         position: absolute;
-        right: 16px;
-        top: 20px;
-        width: 44px;
-        height: 44px;
+        right: 12px;
+        top: 14px;
+        width: 36px;
+        height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
     .compare-inputs {
-        padding: 20px;
-        gap: 16px;
+        padding: 14px 16px;
+        gap: 12px;
     }
 
     .compare-input {
-        padding: 14px 16px;
+        padding: 10px 12px;
         font-size: 16px;
-        min-height: 48px;
+        min-height: 40px;
     }
 
     .compare-label {
-        font-size: 0.8rem;
-        margin-bottom: 8px;
+        font-size: 0.7rem;
+        margin-bottom: 6px;
     }
 
     .compare-vs {
-        font-size: 0.9rem;
-        padding: 8px 0;
+        font-size: 0.8rem;
+        padding: 6px 0;
     }
 
     .compare-add-third {
-        width: 48px;
-        height: 48px;
+        width: 36px;
+        height: 36px;
     }
 
     .compare-generate-btn {
-        margin: 0 20px 20px;
-        padding: 16px 24px;
-        font-size: 1rem;
-        min-height: 52px;
+        margin: 0 16px 16px;
+        padding: 12px 20px;
+        font-size: 0.9rem;
+        min-height: 42px;
     }
 
     .compare-error {
-        margin: 0 20px 16px;
-        font-size: 0.85rem;
+        margin: 0 16px 12px;
+        font-size: 0.8rem;
     }
 
     .compare-results {
-        padding: 0 20px 20px;
-        max-height: calc(85vh - 350px);
+        padding: 0 16px 16px;
+        max-height: calc(80vh - 280px);
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
     }
 
     .compare-panel.expanded {
-        max-height: 90vh;
+        max-height: 85vh;
     }
 
     .compare-panel.expanded .compare-results {
-        max-height: calc(90vh - 200px);
+        max-height: calc(85vh - 180px);
     }
 
     .compare-placeholder {
-        padding: 30px 20px;
+        padding: 20px 16px;
     }
 
     .compare-placeholder svg {
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
     }
 
     .compare-placeholder p {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
     }
 
     /* Mobile backdrop when compare panel is open */
@@ -1327,13 +1327,13 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
     .control-panel {
-        top: 10px;
-        left: 10px;
-        right: 10px;
+        top: 8px;
+        left: 8px;
+        right: 8px;
         width: auto;
         max-width: none;
-        padding: 16px;
-        border-radius: 12px;
+        padding: 12px;
+        border-radius: 10px;
     }
 
     .control-panel.collapsed .panel-content {
@@ -1345,16 +1345,18 @@ body {
     }
 
     .control-panel:not(.collapsed) .panel-content {
-        max-height: 70vh;
+        max-height: 65vh;
         opacity: 1;
         overflow-y: scroll !important;
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
-        padding-bottom: 20px;
+        padding-bottom: 12px;
     }
 
     .mobile-toggle {
         display: flex;
+        width: 32px;
+        height: 32px;
     }
 
     .panel-header {
@@ -1362,130 +1364,139 @@ body {
     }
 
     .control-panel:not(.collapsed) .panel-header {
-        margin-bottom: 16px;
+        margin-bottom: 12px;
     }
 
     .panel-title {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 
     .panel-subtitle {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
     }
 
     .control-group {
-        margin-bottom: 16px;
+        margin-bottom: 12px;
     }
 
-    /* Larger touch targets for inputs */
+    .control-label {
+        font-size: 0.7rem;
+        margin-bottom: 6px;
+    }
+
+    /* Compact inputs for mobile */
     .state-select,
     .zip-search,
     .income-input {
-        padding: 14px 16px;
+        padding: 10px 12px;
         font-size: 16px; /* Prevents iOS zoom on focus */
-        min-height: 48px;
+        min-height: 40px;
     }
 
     .search-btn {
-        min-width: 48px;
-        min-height: 48px;
+        min-width: 40px;
+        min-height: 40px;
     }
 
     .affordability-toggle {
-        min-width: 48px;
-        min-height: 48px;
+        min-width: 40px;
+        min-height: 40px;
     }
 
     .current-year {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
     }
 
     .year-range {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
     }
 
-    /* Show year step buttons on mobile */
+    .year-display {
+        margin-bottom: 8px;
+    }
+
+    /* Compact year step buttons on mobile */
     .year-step-btn {
         display: flex;
-        width: 44px;
-        height: 44px;
+        width: 36px;
+        height: 36px;
     }
 
     /* Better slider for touch */
     .year-slider {
-        height: 8px;
+        height: 6px;
         -webkit-appearance: none;
         appearance: none;
     }
 
     .year-slider::-webkit-slider-thumb {
-        width: 28px;
-        height: 28px;
+        width: 22px;
+        height: 22px;
         -webkit-appearance: none;
         appearance: none;
     }
 
     .year-slider::-moz-range-thumb {
-        width: 28px;
-        height: 28px;
+        width: 22px;
+        height: 22px;
     }
 
     .play-btn {
-        padding: 12px 16px;
-        font-size: 0.9rem;
-        min-height: 44px;
+        padding: 10px 14px;
+        font-size: 0.8rem;
+        min-height: 38px;
     }
 
     .scale-toggle-container {
-        margin-top: 14px;
-        padding-top: 14px;
+        margin-top: 10px;
+        padding-top: 10px;
     }
 
     .scale-toggle-label {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
     }
 
     .toggle-option {
-        padding: 8px 12px;
-        font-size: 0.75rem;
-        min-height: 36px;
+        padding: 6px 10px;
+        font-size: 0.7rem;
+        min-height: 32px;
     }
 
     .stats-bar {
-        margin-top: 16px;
-        padding-top: 16px;
-        gap: 12px;
+        margin-top: 12px;
+        padding-top: 12px;
+        gap: 8px;
     }
 
     .stat-value {
-        font-size: 1rem;
+        font-size: 0.9rem;
     }
 
     .stat-label {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
     }
 
     /* Info panel for mobile - tap to show */
     .info-panel {
         top: auto;
-        bottom: 100px;
-        right: 10px;
-        left: 10px;
+        bottom: 70px;
+        right: 8px;
+        left: 8px;
         min-width: auto;
-        padding: 16px 20px;
+        padding: 12px 16px;
         text-align: center;
     }
 
     .info-zip {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
     }
 
     .info-price {
-        font-size: 1.6rem;
+        font-size: 1.4rem;
     }
 
     .info-change {
-        font-size: 0.85rem;
+        font-size: 0.75rem;
     }
 
     /* Show tap hint on mobile */
@@ -1493,17 +1504,17 @@ body {
         display: block;
     }
 
-    /* Legend at bottom */
+    /* Legend at bottom - more compact */
     .legend {
-        bottom: 10px;
-        left: 10px;
-        right: 10px;
+        bottom: 8px;
+        left: 8px;
+        right: 8px;
         transform: none;
-        padding: 14px 18px;
+        padding: 10px 14px;
     }
 
     .legend-title {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
     }
 
     .legend-scale {
@@ -1512,100 +1523,103 @@ body {
     }
 
     .legend-labels {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
     }
 
     /* Tooltips on mobile - full width and centered */
     .tooltip-content {
-        width: calc(100vw - 40px) !important;
-        max-width: 320px;
+        width: calc(100vw - 32px) !important;
+        max-width: 280px;
         left: 50% !important;
         transform: translateX(-50%);
         top: auto !important;
-        bottom: 60px;
+        bottom: 50px;
         position: fixed;
+        font-size: 0.8rem;
+        padding: 12px;
     }
 
     /* Welcome modal mobile */
     .welcome-content {
         max-width: 100%;
-        max-height: 85vh;
-        margin: 10px;
-        border-radius: 16px;
+        max-height: 80vh;
+        margin: 8px;
+        border-radius: 14px;
     }
 
     .welcome-header {
-        padding: 24px 20px 0;
+        padding: 18px 16px 0;
     }
 
     .welcome-icon {
-        font-size: 2rem;
+        font-size: 1.8rem;
     }
 
     .welcome-header h2 {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
 
     .welcome-body {
-        padding: 20px;
+        padding: 16px;
     }
 
     .welcome-section h3 {
-        font-size: 0.9rem;
-    }
-
-    .welcome-section p {
         font-size: 0.85rem;
     }
 
+    .welcome-section p {
+        font-size: 0.8rem;
+    }
+
     .welcome-close {
-        width: calc(100% - 40px);
-        margin: 0 20px 20px;
-        padding: 16px 24px;
-        font-size: 1rem;
-        min-height: 52px;
+        width: calc(100% - 32px);
+        margin: 0 16px 16px;
+        padding: 12px 20px;
+        font-size: 0.9rem;
+        min-height: 44px;
     }
 
     /* Affordability info */
     .affordability-info {
-        font-size: 0.8rem;
-        padding: 10px 12px;
+        font-size: 0.75rem;
+        padding: 8px 10px;
     }
 
     /* Price History Popup - Mobile Optimized */
     .price-history-popup-container .leaflet-popup-content-wrapper {
-        max-width: calc(100vw - 40px);
-        max-height: 60vh;
+        max-width: calc(100vw - 32px);
+        max-height: 55vh;
     }
 
     .price-history-popup-container .leaflet-popup-close-button {
-        width: 36px;
-        height: 36px;
-        font-size: 24px;
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
         right: 4px;
         top: 4px;
     }
 
     .popup-header {
-        padding: 12px 14px;
+        padding: 10px 12px;
+        font-size: 0.9rem;
     }
 
     .popup-summary {
-        padding: 10px 14px;
+        padding: 8px 12px;
     }
 
     .popup-current {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
     }
 
     .popup-grid {
-        max-height: 30vh;
-        padding: 0 10px 10px;
+        max-height: 25vh;
+        padding: 0 8px 8px;
     }
 
     .popup-row {
-        padding: 8px;
-        gap: 6px;
+        padding: 6px;
+        gap: 4px;
     }
 
     .popup-year {
@@ -1620,30 +1634,34 @@ body {
 /* Extra small screens */
 @media (max-width: 400px) {
     .control-panel {
-        top: 8px;
-        left: 8px;
-        right: 8px;
-        padding: 12px;
+        top: 6px;
+        left: 6px;
+        right: 6px;
+        padding: 10px;
     }
 
     .panel-title {
-        font-size: 1rem;
-    }
-
-    .current-year {
-        font-size: 1.5rem;
-    }
-
-    .stat-item {
-        min-width: 60px;
-    }
-
-    .stat-value {
         font-size: 0.9rem;
     }
 
+    .panel-subtitle {
+        font-size: 0.65rem;
+    }
+
+    .current-year {
+        font-size: 1.3rem;
+    }
+
+    .stat-item {
+        min-width: 50px;
+    }
+
+    .stat-value {
+        font-size: 0.8rem;
+    }
+
     .toggle-option {
-        padding: 6px 10px;
+        padding: 5px 8px;
         font-size: 0.7rem;
     }
 

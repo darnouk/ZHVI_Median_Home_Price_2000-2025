@@ -75,8 +75,7 @@ function cacheElements() {
     Elements.compareClose = document.getElementById('compareClose');
     Elements.compareZip1 = document.getElementById('compareZip1');
     Elements.compareZip2 = document.getElementById('compareZip2');
-    Elements.compareAdd1 = document.getElementById('compareAdd1');
-    Elements.compareAdd2 = document.getElementById('compareAdd2');
+    Elements.compareGenerateBtn = document.getElementById('compareGenerateBtn');
     Elements.compareError = document.getElementById('compareError');
     Elements.compareResults = document.getElementById('compareResults');
 }
@@ -1059,44 +1058,62 @@ function updateAffordabilityDisplay() {
 
 /**
  * Add a ZIP code to comparison
- * @param {string} zip - ZIP code to add
- * @param {number} slot - Which slot (1 or 2)
+ * @param {string} zip1 - First ZIP code
+ * @param {string} zip2 - Second ZIP code
  */
-function addToComparison(zip, slot) {
-    // Validate ZIP
-    if (!zip || zip.length !== 5) {
-        Elements.compareError.textContent = 'Please enter a valid 5-digit ZIP code';
+function generateComparison(zip1, zip2) {
+    // Clear previous error
+    Elements.compareError.textContent = '';
+    
+    // Validate both ZIPs
+    if (!zip1 || zip1.length !== 5) {
+        Elements.compareError.textContent = 'Please enter a valid 5-digit ZIP code for ZIP Code 1';
+        return;
+    }
+    
+    if (!zip2 || zip2.length !== 5) {
+        Elements.compareError.textContent = 'Please enter a valid 5-digit ZIP code for ZIP Code 2';
         return;
     }
 
-    // Check if ZIP exists in current state
-    const data = AppState.zhviData[zip];
-    if (!data) {
-        Elements.compareError.textContent = 'ZIP code not found in database';
+    // Check if ZIPs exist in database
+    const data1 = AppState.zhviData[zip1];
+    const data2 = AppState.zhviData[zip2];
+    
+    if (!data1) {
+        Elements.compareError.textContent = `ZIP ${zip1} not found in database`;
+        return;
+    }
+    
+    if (!data2) {
+        Elements.compareError.textContent = `ZIP ${zip2} not found in database`;
         return;
     }
 
-    // Check if ZIP is in current state's GeoJSON
+    // Check if ZIPs are in current state's GeoJSON
     if (AppState.currentGeoJSON) {
-        const inState = AppState.currentGeoJSON.features.some(
-            f => f.properties.ZCTA5CE10 === zip
+        const zip1InState = AppState.currentGeoJSON.features.some(
+            f => f.properties.ZCTA5CE10 === zip1
         );
-        if (!inState) {
-            Elements.compareError.textContent = 'ZIP code not in current state';
+        const zip2InState = AppState.currentGeoJSON.features.some(
+            f => f.properties.ZCTA5CE10 === zip2
+        );
+        
+        if (!zip1InState) {
+            Elements.compareError.textContent = `ZIP ${zip1} not in current state`;
+            return;
+        }
+        
+        if (!zip2InState) {
+            Elements.compareError.textContent = `ZIP ${zip2} not in current state`;
             return;
         }
     }
 
-    // Add to comparison
-    if (slot === 1) {
-        AppState.compareZips.zip1 = zip;
-        Elements.compareZip1.value = zip;
-    } else {
-        AppState.compareZips.zip2 = zip;
-        Elements.compareZip2.value = zip;
-    }
-
-    Elements.compareError.textContent = '';
+    // Store comparison
+    AppState.compareZips = { zip1, zip2 };
+    
+    // Update results
     updateComparisonResults();
 }
 
@@ -1262,21 +1279,27 @@ function drawComparisonChart(zip1, zip2) {
 
     if (years.length === 0) return;
 
-    // Set canvas size
-    const width = canvas.parentElement.clientWidth - 40;
-    const height = 300;
-    canvas.width = width;
-    canvas.height = height;
+    // Set canvas size with proper DPI scaling
+    const dpr = window.devicePixelRatio || 1;
+    const displayWidth = canvas.parentElement.clientWidth - 40;
+    const displayHeight = 320;
+    
+    canvas.width = displayWidth * dpr;
+    canvas.height = displayHeight * dpr;
+    canvas.style.width = displayWidth + 'px';
+    canvas.style.height = displayHeight + 'px';
+    
+    ctx.scale(dpr, dpr);
 
-    // Chart dimensions
-    const padding = { top: 40, right: 20, bottom: 50, left: 70 };
-    const chartWidth = width - padding.left - padding.right;
-    const chartHeight = height - padding.top - padding.bottom;
+    // Chart dimensions with more padding for labels
+    const padding = { top: 50, right: 30, bottom: 60, left: 80 };
+    const chartWidth = displayWidth - padding.left - padding.right;
+    const chartHeight = displayHeight - padding.top - padding.bottom;
 
     // Find min/max for scaling
     const allPrices = [...prices1.filter(p => p !== null), ...prices2.filter(p => p !== null)];
-    const minPrice = Math.min(...allPrices) * 0.95;
-    const maxPrice = Math.max(...allPrices) * 1.05;
+    const minPrice = Math.min(...allPrices) * 0.90;
+    const maxPrice = Math.max(...allPrices) * 1.10;
 
     // Helper functions
     const getX = (index) => padding.left + (index / (years.length - 1)) * chartWidth;
@@ -1285,15 +1308,16 @@ function drawComparisonChart(zip1, zip2) {
         return padding.top + chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
     };
 
-    // Clear canvas
+    // Clear canvas with dark background
     ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, displayWidth, displayHeight);
 
-    // Draw grid lines
+    // Draw grid lines (horizontal only)
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 1;
-    for (let i = 0; i <= 5; i++) {
-        const y = padding.top + (chartHeight / 5) * i;
+    const gridLines = 6;
+    for (let i = 0; i <= gridLines; i++) {
+        const y = padding.top + (chartHeight / gridLines) * i;
         ctx.beginPath();
         ctx.moveTo(padding.left, y);
         ctx.lineTo(padding.left + chartWidth, y);
@@ -1302,28 +1326,32 @@ function drawComparisonChart(zip1, zip2) {
 
     // Draw Y-axis labels (prices)
     ctx.fillStyle = '#94a3b8';
-    ctx.font = '12px sans-serif';
+    ctx.font = '13px -apple-system, system-ui, sans-serif';
     ctx.textAlign = 'right';
-    for (let i = 0; i <= 5; i++) {
-        const price = minPrice + (maxPrice - minPrice) * (1 - i / 5);
-        const y = padding.top + (chartHeight / 5) * i;
-        ctx.fillText(formatCurrency(price), padding.left - 10, y + 4);
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i <= gridLines; i++) {
+        const price = minPrice + (maxPrice - minPrice) * (1 - i / gridLines);
+        const y = padding.top + (chartHeight / gridLines) * i;
+        ctx.fillText(formatCurrency(price), padding.left - 12, y);
     }
 
-    // Draw X-axis labels (years) - show every 5 years
+    // Draw X-axis labels (years) - show every 5 years + current year
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
     years.forEach((year, index) => {
-        if (year % 5 === 0 || year === 2025) {
+        if (year % 5 === 0 || year === years[years.length - 1]) {
             const x = getX(index);
-            ctx.fillText(year.toString(), x, height - padding.bottom + 20);
+            ctx.fillText(year.toString(), x, displayHeight - padding.bottom + 15);
         }
     });
 
-    // Draw line for ZIP 1 (red)
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 3;
+    // Draw line for ZIP 1 (brighter red)
+    ctx.strokeStyle = '#ff4444';
+    ctx.lineWidth = 3.5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(255, 68, 68, 0.3)';
+    ctx.shadowBlur = 4;
     ctx.beginPath();
     let firstPoint1 = true;
     prices1.forEach((price, index) => {
@@ -1339,10 +1367,13 @@ function drawComparisonChart(zip1, zip2) {
         }
     });
     ctx.stroke();
+    ctx.shadowBlur = 0;
 
-    // Draw line for ZIP 2 (blue)
-    ctx.strokeStyle = '#3b82f6';
-    ctx.lineWidth = 3;
+    // Draw line for ZIP 2 (brighter blue)
+    ctx.strokeStyle = '#4488ff';
+    ctx.lineWidth = 3.5;
+    ctx.shadowColor = 'rgba(68, 136, 255, 0.3)';
+    ctx.shadowBlur = 4;
     ctx.beginPath();
     let firstPoint2 = true;
     prices2.forEach((price, index) => {
@@ -1358,13 +1389,22 @@ function drawComparisonChart(zip1, zip2) {
         }
     });
     ctx.stroke();
+    ctx.shadowBlur = 0;
 
     // Draw points for ZIP 1
     prices1.forEach((price, index) => {
         if (price !== null) {
             const x = getX(index);
             const y = getY(price);
-            ctx.fillStyle = '#ef4444';
+            
+            // Outer glow
+            ctx.fillStyle = 'rgba(255, 68, 68, 0.3)';
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Inner dot
+            ctx.fillStyle = '#ff4444';
             ctx.beginPath();
             ctx.arc(x, y, 4, 0, 2 * Math.PI);
             ctx.fill();
@@ -1376,34 +1416,47 @@ function drawComparisonChart(zip1, zip2) {
         if (price !== null) {
             const x = getX(index);
             const y = getY(price);
-            ctx.fillStyle = '#3b82f6';
+            
+            // Outer glow
+            ctx.fillStyle = 'rgba(68, 136, 255, 0.3)';
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Inner dot
+            ctx.fillStyle = '#4488ff';
             ctx.beginPath();
             ctx.arc(x, y, 4, 0, 2 * Math.PI);
             ctx.fill();
         }
     });
 
-    // Draw legend
+    // Title
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = 'bold 17px -apple-system, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Price History Comparison', displayWidth / 2, 15);
+
+    // Legend with better spacing
     ctx.textAlign = 'left';
-    ctx.font = '14px sans-serif';
+    ctx.font = '14px -apple-system, system-ui, sans-serif';
+    ctx.textBaseline = 'middle';
+    
+    const legendY = 38;
+    const legendStartX = displayWidth / 2 - 100;
     
     // ZIP 1 legend
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(padding.left, 15, 20, 3);
-    ctx.fillStyle = '#f1f5f9';
-    ctx.fillText(`ZIP ${zip1}`, padding.left + 30, 20);
+    ctx.fillStyle = '#ff4444';
+    ctx.fillRect(legendStartX, legendY - 2, 30, 4);
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillText(`ZIP ${zip1}`, legendStartX + 38, legendY);
     
     // ZIP 2 legend
-    ctx.fillStyle = '#3b82f6';
-    ctx.fillRect(padding.left + 150, 15, 20, 3);
-    ctx.fillStyle = '#f1f5f9';
-    ctx.fillText(`ZIP ${zip2}`, padding.left + 180, 20);
-
-    // Title
-    ctx.fillStyle = '#f1f5f9';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Price History Comparison', width / 2, 25);
+    ctx.fillStyle = '#4488ff';
+    ctx.fillRect(legendStartX + 120, legendY - 2, 30, 4);
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillText(`ZIP ${zip2}`, legendStartX + 158, legendY);
 }
 
 /**
@@ -1474,25 +1527,21 @@ function setupCompareListeners() {
         Elements.compareError.textContent = '';
     });
 
-    // Add buttons
-    Elements.compareAdd1.addEventListener('click', () => {
-        addToComparison(Elements.compareZip1.value, 1);
-    });
-
-    Elements.compareAdd2.addEventListener('click', () => {
-        addToComparison(Elements.compareZip2.value, 2);
+    // Generate button
+    Elements.compareGenerateBtn.addEventListener('click', () => {
+        generateComparison(Elements.compareZip1.value, Elements.compareZip2.value);
     });
 
     // Enter key support
     Elements.compareZip1.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            addToComparison(Elements.compareZip1.value, 1);
+            generateComparison(Elements.compareZip1.value, Elements.compareZip2.value);
         }
     });
 
     Elements.compareZip2.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            addToComparison(Elements.compareZip2.value, 2);
+            generateComparison(Elements.compareZip1.value, Elements.compareZip2.value);
         }
     });
 

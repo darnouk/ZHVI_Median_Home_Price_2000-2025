@@ -914,21 +914,17 @@ body {
     color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-}
-
-.compare-input-row {
-    display: flex;
-    gap: 8px;
+    margin-bottom: 6px;
 }
 
 .compare-input {
-    flex: 1;
-    padding: 10px 14px;
+    width: 100%;
+    padding: 12px 16px;
     background: rgba(15, 23, 42, 0.8);
     border: 1px solid rgba(99, 102, 241, 0.3);
     border-radius: 8px;
     color: #f8fafc;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-family: inherit;
     outline: none;
     transition: all 0.2s ease;
@@ -943,36 +939,44 @@ body {
     color: #475569;
 }
 
-.compare-add-btn {
-    width: 40px;
-    height: 40px;
-    background: rgba(99, 102, 241, 0.2);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    border-radius: 8px;
-    color: #a5b4fc;
-    font-size: 1.2rem;
+.compare-generate-btn {
+    width: 100%;
+    padding: 14px 20px;
+    margin-top: 16px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.compare-add-btn:hover {
-    background: rgba(99, 102, 241, 0.4);
-    color: #fff;
+.compare-generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+}
+
+.compare-generate-btn:active {
+    transform: translateY(0);
 }
 
 .compare-vs {
     text-align: center;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 700;
     color: #64748b;
-    padding: 4px 0;
+    padding: 8px 0;
 }
 
 .compare-error {
-    padding: 0 16px;
-    font-size: 0.8rem;
+    padding: 8px 16px;
+    font-size: 0.85rem;
     color: #f87171;
-    min-height: 20px;
+    min-height: 24px;
 }
 
 .compare-error.success {
@@ -1004,17 +1008,19 @@ body {
 
 /* Comparison Results */
 .compare-chart-container {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 16px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .compare-chart-container canvas {
     display: block;
     width: 100%;
     height: auto;
+    border-radius: 8px;
 }
 
 .compare-cards {

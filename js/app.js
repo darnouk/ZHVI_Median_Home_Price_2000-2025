@@ -360,7 +360,7 @@ function showPriceHistoryPopup(e, feature) {
     const data = AppState.zhviData[zip];
     
     let popupContent = `<div class="price-history-popup">`;
-    popupContent += `<div class="popup-header">📍 ZIP Code ${zip}</div>`;
+    popupContent += `<div class="popup-header">ZIP Code ${zip}</div>`;
     
     if (data) {
         // Find years with data
@@ -961,9 +961,7 @@ function setupEventListeners() {
         const hasSeenWelcome = localStorage.getItem('zhvi_welcome_seen');
         
         // Show modal only if user hasn't seen it before
-        if (!hasSeenWelcome) {
-            Elements.welcomeModal.classList.remove('hidden');
-        }
+        Elements.welcomeModal.classList.remove('hidden');
         
         const closeWelcomeModal = () => {
             Elements.welcomeModal.classList.add('hidden');
@@ -1336,8 +1334,29 @@ async function init() {
     // Set up compare panel (desktop only)
     setupCompareListeners();
 
+    // Ensure welcome modal can be shown via About button
+    setupAboutButton();
+
     console.log('ZHVI Map initialized successfully!');
     console.log('Architecture: Lazy loading - GeoJSON only loaded on state selection');
+}
+
+// Add About button behavior: show welcome modal on click if not previously dismissed
+function showWelcomeModal(force = false) {
+    const hasSeen = localStorage.getItem('zhvi_welcome_seen');
+    if (hasSeen && !force) return;
+    const modal = document.getElementById('welcomeModal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+// Ensure About button opens modal
+function setupAboutButton() {
+    const aboutBtn = document.getElementById('aboutBtn');
+    if (!aboutBtn) return;
+    aboutBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showWelcomeModal(true);
+    });
 }
 
 // Start the application

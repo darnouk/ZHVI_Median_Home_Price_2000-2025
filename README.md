@@ -4,12 +4,12 @@ An interactive web map visualizing Zillow Home Value Index (ZHVI) median single-
 
 ## Features
 
-- 🗺️ **Interactive Map**: Explore home prices by ZIP code across all 50 states + DC
-- 🎛️ **State Toggle**: Load states on-demand to keep performance smooth
-- 📅 **Time Slider**: View price changes from 2000 to 2025
-- ▶️ **Animated Timeline**: Watch prices change over time with play/pause
-- 📊 **Statistics**: See median, lowest, and highest prices for each state/year
-- 🎨 **Beautiful UI**: Modern dark theme with smooth animations
+- Interactive Map: Explore home prices by ZIP code across all 50 states + DC
+- State Toggle: Load states on-demand to keep performance smooth
+- Time Slider: View price changes from 2000 to 2025
+- Animated Timeline: Watch prices change over time with play/pause
+- Statistics: See median, lowest, and highest prices for each state/year
+- Beautiful UI: Modern dark theme with smooth animations
 
 ## Getting Started
 
@@ -60,8 +60,8 @@ ZHVI_Median_Home_Price_2000-2025/
 
 ## Data Sources
 
-- **Price Data**: Zillow Home Value Index (ZHVI) - Single Family Homes
-- **ZIP Code Boundaries**: US Census Bureau ZCTA boundaries
+- Price Data: Zillow Home Value Index (ZHVI) - Single Family Homes
+- ZIP Code Boundaries: US Census Bureau ZCTA boundaries
 
 ## How It Works
 

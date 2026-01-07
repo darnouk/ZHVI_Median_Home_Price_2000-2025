@@ -825,6 +825,11 @@ body {
     transition: all 0.3s ease;
 }
 
+/* Hide backdrop on desktop */
+.compare-backdrop {
+    display: none;
+}
+
 .compare-panel.expanded {
     width: 480px;
 }
@@ -1067,6 +1072,7 @@ body {
     display: block;
     width: 100%;
     height: auto;
+    touch-action: none; /* Prevent scrolling while interacting with chart */
 }
 
 .compare-results {
@@ -1075,10 +1081,177 @@ body {
     max-height: calc(100vh - 280px);
 }
 
-/* Hide compare panel on mobile */
+/* Mobile Compare Panel - Bottom Sheet Style */
 @media (max-width: 768px) {
     .compare-panel {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-height: 85vh;
+        border-radius: 20px 20px 0 0;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1500;
+    }
+
+    .compare-panel.mobile-open {
+        transform: translateY(0);
+    }
+
+    .compare-panel.collapsed {
+        position: fixed;
+        width: auto;
+        height: auto;
+        top: auto;
+        bottom: 80px;
+        left: auto;
+        right: 16px;
+        border-radius: 50%;
+        transform: none;
+        overflow: visible;
+    }
+
+    .compare-panel.collapsed .compare-toggle {
+        display: flex;
+        position: relative;
+        top: 0;
+        right: 0;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .compare-panel.collapsed .compare-toggle svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .compare-panel:not(.collapsed) .compare-toggle {
         display: none;
+    }
+
+    .compare-header {
+        padding: 20px 20px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+    }
+
+    .compare-header::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+    }
+
+    .compare-title {
+        font-size: 1.1rem;
+        text-align: center;
+        margin-top: 8px;
+    }
+
+    .compare-close {
+        position: absolute;
+        right: 16px;
+        top: 20px;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .compare-inputs {
+        padding: 20px;
+        gap: 16px;
+    }
+
+    .compare-input {
+        padding: 14px 16px;
+        font-size: 16px;
+        min-height: 48px;
+    }
+
+    .compare-label {
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+    }
+
+    .compare-vs {
+        font-size: 0.9rem;
+        padding: 8px 0;
+    }
+
+    .compare-add-third {
+        width: 48px;
+        height: 48px;
+    }
+
+    .compare-generate-btn {
+        margin: 0 20px 20px;
+        padding: 16px 24px;
+        font-size: 1rem;
+        min-height: 52px;
+    }
+
+    .compare-error {
+        margin: 0 20px 16px;
+        font-size: 0.85rem;
+    }
+
+    .compare-results {
+        padding: 0 20px 20px;
+        max-height: calc(85vh - 350px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .compare-panel.expanded {
+        max-height: 90vh;
+    }
+
+    .compare-panel.expanded .compare-results {
+        max-height: calc(90vh - 200px);
+    }
+
+    .compare-placeholder {
+        padding: 30px 20px;
+    }
+
+    .compare-placeholder svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    .compare-placeholder p {
+        font-size: 0.9rem;
+    }
+
+    /* Mobile backdrop when compare panel is open */
+    .compare-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1400;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .compare-backdrop.visible {
+        display: block;
+        opacity: 1;
     }
 }
 
@@ -1397,6 +1570,50 @@ body {
     .affordability-info {
         font-size: 0.8rem;
         padding: 10px 12px;
+    }
+
+    /* Price History Popup - Mobile Optimized */
+    .price-history-popup-container .leaflet-popup-content-wrapper {
+        max-width: calc(100vw - 40px);
+        max-height: 60vh;
+    }
+
+    .price-history-popup-container .leaflet-popup-close-button {
+        width: 36px;
+        height: 36px;
+        font-size: 24px;
+        right: 4px;
+        top: 4px;
+    }
+
+    .popup-header {
+        padding: 12px 14px;
+    }
+
+    .popup-summary {
+        padding: 10px 14px;
+    }
+
+    .popup-current {
+        font-size: 1.3rem;
+    }
+
+    .popup-grid {
+        max-height: 30vh;
+        padding: 0 10px 10px;
+    }
+
+    .popup-row {
+        padding: 8px;
+        gap: 6px;
+    }
+
+    .popup-year {
+        font-size: 0.75rem;
+    }
+
+    .popup-price {
+        font-size: 0.85rem;
     }
 }
 

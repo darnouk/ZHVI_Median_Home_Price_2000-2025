@@ -81,6 +81,7 @@ function cacheElements() {
     Elements.compareGenerateBtn = document.getElementById('compareGenerateBtn');
     Elements.compareError = document.getElementById('compareError');
     Elements.compareResults = document.getElementById('compareResults');
+    Elements.compareBackdrop = document.getElementById('compareBackdrop');
 }
 
 /**
@@ -1527,6 +1528,33 @@ function drawComparisonChart(zip1, zip2, zip3) {
         drawChart(-1);
         canvas.style.cursor = 'default';
     };
+
+    // Touch event handlers for mobile
+    let lastTouchIndex = -1;
+
+    canvas.ontouchstart = (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const fakeEvent = { clientX: touch.clientX, clientY: touch.clientY };
+        lastTouchIndex = getHoverIndex(fakeEvent);
+        drawChart(lastTouchIndex);
+    };
+
+    canvas.ontouchmove = (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const fakeEvent = { clientX: touch.clientX, clientY: touch.clientY };
+        lastTouchIndex = getHoverIndex(fakeEvent);
+        drawChart(lastTouchIndex);
+    };
+
+    canvas.ontouchend = () => {
+        // Keep showing the last touched point for a moment, then clear
+        setTimeout(() => {
+            drawChart(-1);
+            lastTouchIndex = -1;
+        }, 1500);
+    };
 }
 
 /**
@@ -1535,14 +1563,53 @@ function drawComparisonChart(zip1, zip2, zip3) {
 function setupCompareListeners() {
     if (!Elements.comparePanel) return;
 
+    const isMobile = () => window.innerWidth <= 768;
+
+    // Helper to open panel (works on both mobile and desktop)
+    const openComparePanel = () => {
+        Elements.comparePanel.classList.remove('collapsed');
+        if (isMobile()) {
+            Elements.comparePanel.classList.add('mobile-open');
+            Elements.compareBackdrop.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+    };
+
+    // Helper to close panel
+    const closeComparePanel = () => {
+        Elements.comparePanel.classList.add('collapsed');
+        Elements.comparePanel.classList.remove('mobile-open');
+        Elements.comparePanel.classList.remove('expanded');
+        if (Elements.compareBackdrop) {
+            Elements.compareBackdrop.classList.remove('visible');
+        }
+        document.body.style.overflow = '';
+    };
+
     // Toggle panel open/closed
     Elements.compareToggle.addEventListener('click', (e) => {
         e.stopPropagation();
-        Elements.comparePanel.classList.remove('collapsed');
+        openComparePanel();
     });
 
     Elements.compareClose.addEventListener('click', () => {
-        Elements.comparePanel.classList.add('collapsed');
+        closeComparePanel();
+    });
+
+    // Close on backdrop click (mobile)
+    if (Elements.compareBackdrop) {
+        Elements.compareBackdrop.addEventListener('click', () => {
+            closeComparePanel();
+        });
+    }
+
+    // Handle orientation/resize changes
+    window.addEventListener('resize', () => {
+        if (!isMobile() && Elements.comparePanel.classList.contains('mobile-open')) {
+            Elements.comparePanel.classList.remove('mobile-open');
+            Elements.compareBackdrop.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
     });
 
     // Input validation

@@ -830,13 +830,17 @@ body {
     height: 48px;
     border-radius: 12px;
     cursor: pointer;
+    overflow: hidden;
 }
 
 .compare-panel.collapsed .compare-header,
 .compare-panel.collapsed .compare-inputs,
 .compare-panel.collapsed .compare-error,
-.compare-panel.collapsed .compare-results {
-    display: none;
+.compare-panel.collapsed .compare-results,
+.compare-panel.collapsed .compare-generate-btn {
+    display: none !important;
+    visibility: hidden;
+    opacity: 0;
 }
 
 .compare-panel.collapsed .compare-toggle {
@@ -850,15 +854,16 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    width: 100%;
-    height: 100%;
-    background: transparent;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
     border: none;
     color: #a5b4fc;
     cursor: pointer;
     align-items: center;
     justify-content: center;
     transition: color 0.2s ease;
+    z-index: 10;
 }
 
 .compare-toggle:hover {

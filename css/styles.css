@@ -20,6 +20,38 @@ body {
     z-index: 1;
 }
 
+/* Leaflet Zoom Controls Styling */
+.leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+.leaflet-control-zoom a {
+    background: rgba(15, 23, 42, 0.95) !important;
+    color: #a5b4fc !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    font-size: 18px !important;
+    transition: all 0.2s ease !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background: rgba(30, 41, 59, 0.95) !important;
+    color: #f8fafc !important;
+    border-color: rgba(99, 102, 241, 0.5) !important;
+}
+
+.leaflet-control-zoom-in {
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.leaflet-control-zoom-out {
+    border-radius: 0 0 8px 8px !important;
+    border-top: none !important;
+}
+
 /* Control Panel */
 .control-panel {
     position: absolute;
@@ -813,14 +845,14 @@ body {
 /* Compare Panel (Desktop Only) */
 .compare-panel {
     position: absolute;
-    top: 20px;
+    top: 140px;
     right: 20px;
     width: 320px;
     background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
     border: 1px solid rgba(99, 102, 241, 0.3);
     border-radius: 16px;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
-    z-index: 1000;
+    z-index: 999;
     overflow: hidden;
     transition: all 0.3s ease;
 }

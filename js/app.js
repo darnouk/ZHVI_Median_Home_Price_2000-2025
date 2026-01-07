@@ -93,10 +93,15 @@ function initMap() {
     AppState.map = L.map('map', {
         center: [39.8, -98.5],
         zoom: 4,
-        zoomControl: true,
+        zoomControl: false,  // Disable default, we'll add custom position
         attributionControl: true,
         preferCanvas: true  // Canvas renderer for better performance
     });
+    
+    // Add zoom control to bottom right
+    L.control.zoom({
+        position: 'bottomright'
+    }).addTo(AppState.map);
 
     // Dark map tiles
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -440,10 +445,29 @@ function showPriceHistoryPopup(e, feature) {
 function highlightFeature(e, feature) {
     const layer = e.target;
     
+    // Calculate fill opacity based on zoom level
+    // At zoom 4-8: opacity 1.0 (full), at zoom 16+: opacity 0.3 (minimal)
+    const zoom = AppState.map.getZoom();
+    const minZoom = 8;
+    const maxZoom = 16;
+    const maxOpacity = 1.0;
+    const minOpacity = 0.3;
+    
+    let fillOpacity;
+    if (zoom <= minZoom) {
+        fillOpacity = maxOpacity;
+    } else if (zoom >= maxZoom) {
+        fillOpacity = minOpacity;
+    } else {
+        // Linear interpolation between min and max
+        const t = (zoom - minZoom) / (maxZoom - minZoom);
+        fillOpacity = maxOpacity - (t * (maxOpacity - minOpacity));
+    }
+    
     layer.setStyle({
         weight: 2.5,
         color: '#ffffff',
-        fillOpacity: 1,
+        fillOpacity: fillOpacity,
         lineCap: 'round',
         lineJoin: 'round'
     });

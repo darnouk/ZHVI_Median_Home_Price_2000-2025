@@ -1188,60 +1188,16 @@ function updateComparisonResults() {
         return;
     }
 
-    let html = '';
-
     // Chart container (only if both ZIPs are set)
     if (zip1 && zip2) {
-        html += '<div class="compare-chart-container"><canvas id="compareChart"></canvas></div>';
-    }
-
-    html += '<div class="compare-cards">';
-
-    // ZIP 1 card
-    if (zip1) {
-        const stats1 = getZipStats(zip1);
-        if (stats1) {
-            html += generateCompareCard(stats1, 'zip1');
-        }
-    }
-
-    // ZIP 2 card
-    if (zip2) {
-        const stats2 = getZipStats(zip2);
-        if (stats2) {
-            html += generateCompareCard(stats2, 'zip2');
-        }
-    }
-
-    // Difference card (only if both ZIPs are set)
-    if (zip1 && zip2) {
-        const stats1 = getZipStats(zip1);
-        const stats2 = getZipStats(zip2);
-        if (stats1 && stats2) {
-            const priceDiff = stats1.currentPrice - stats2.currentPrice;
-            const percentDiff = ((priceDiff / stats2.currentPrice) * 100).toFixed(1);
-            const isHigher = priceDiff > 0;
-
-            html += `
-                <div class="compare-diff">
-                    <div class="compare-diff-title">Price Difference (${AppState.currentYear})</div>
-                    <div class="compare-diff-value ${isHigher ? 'higher' : 'lower'}">
-                        ${isHigher ? '+' : ''}${formatCurrency(Math.abs(priceDiff))}
-                    </div>
-                    <div class="compare-diff-label">
-                        ZIP ${zip1} is ${Math.abs(percentDiff)}% ${isHigher ? 'higher' : 'lower'} than ZIP ${zip2}
-                    </div>
-                </div>
-            `;
-        }
-    }
-
-    html += '</div>';
-    Elements.compareResults.innerHTML = html;
-
-    // Draw the chart if both ZIPs are present
-    if (zip1 && zip2) {
+        Elements.compareResults.innerHTML = '<div class="compare-chart-container"><canvas id="compareChart"></canvas></div>';
         drawComparisonChart(zip1, zip2);
+    } else {
+        Elements.compareResults.innerHTML = `
+            <div class="compare-placeholder">
+                <p>Please enter both ZIP codes to generate comparison</p>
+            </div>
+        `;
     }
 }
 
@@ -1433,71 +1389,29 @@ function drawComparisonChart(zip1, zip2) {
 
     // Title
     ctx.fillStyle = '#f8fafc';
-    ctx.font = 'bold 17px -apple-system, system-ui, sans-serif';
+    ctx.font = 'bold 18px -apple-system, system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText('Price History Comparison', displayWidth / 2, 15);
 
-    // Legend with better spacing
+    // Legend with color-coded ZIP labels
     ctx.textAlign = 'left';
-    ctx.font = '14px -apple-system, system-ui, sans-serif';
+    ctx.font = '15px -apple-system, system-ui, sans-serif';
     ctx.textBaseline = 'middle';
     
-    const legendY = 38;
-    const legendStartX = displayWidth / 2 - 100;
+    const legendY = 40;
+    const legendStartX = displayWidth / 2 - 110;
     
-    // ZIP 1 legend
+    // ZIP 1 legend - RED
     ctx.fillStyle = '#ff4444';
-    ctx.fillRect(legendStartX, legendY - 2, 30, 4);
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillText(`ZIP ${zip1}`, legendStartX + 38, legendY);
+    ctx.fillRect(legendStartX, legendY - 2, 35, 4);
+    ctx.font = 'bold 15px -apple-system, system-ui, sans-serif';
+    ctx.fillText(`ZIP ${zip1}`, legendStartX + 43, legendY);
     
-    // ZIP 2 legend
+    // ZIP 2 legend - BLUE
     ctx.fillStyle = '#4488ff';
-    ctx.fillRect(legendStartX + 120, legendY - 2, 30, 4);
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillText(`ZIP ${zip2}`, legendStartX + 158, legendY);
-}
-
-/**
- * Generate HTML for a comparison card
- * @param {Object} stats - ZIP statistics
- * @param {string} className - CSS class (zip1 or zip2)
- * @returns {string} HTML string
- */
-function generateCompareCard(stats, className) {
-    const changeClass = stats.overallChange >= 0 ? 'positive' : 'negative';
-    const changeSign = stats.overallChange >= 0 ? '+' : '';
-
-    return `
-        <div class="compare-card ${className}">
-            <div class="compare-card-header">
-                <span class="compare-card-zip">${stats.zip}</span>
-                <span class="compare-card-price">${formatCurrency(stats.currentPrice)}</span>
-            </div>
-            <div class="compare-card-change ${changeClass}">
-                ${changeSign}${stats.overallChange.toFixed(1)}% since ${stats.firstYear}
-            </div>
-            <div class="compare-card-stats">
-                <div class="compare-stat">
-                    <span>Peak</span>
-                    <span class="compare-stat-value">${formatCurrency(stats.peakPrice)} (${stats.peakYear})</span>
-                </div>
-                <div class="compare-stat">
-                    <span>Lowest</span>
-                    <span class="compare-stat-value">${formatCurrency(stats.lowestPrice)} (${stats.lowestYear})</span>
-                </div>
-                <div class="compare-stat">
-                    <span>Avg/Year</span>
-                    <span class="compare-stat-value">${stats.avgYearlyChange >= 0 ? '+' : ''}${stats.avgYearlyChange.toFixed(1)}%</span>
-                </div>
-                <div class="compare-stat">
-                    <span>Data Years</span>
-                    <span class="compare-stat-value">${stats.dataYears} years</span>
-                </div>
-            </div>
-        </div>
-    `;
+    ctx.fillRect(legendStartX + 130, legendY - 2, 35, 4);
+    ctx.fillText(`ZIP ${zip2}`, legendStartX + 173, legendY);
 }
 
 /**

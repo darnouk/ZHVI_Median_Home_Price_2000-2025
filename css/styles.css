@@ -940,9 +940,9 @@ body {
 }
 
 .compare-generate-btn {
-    width: 100%;
+    width: calc(100% - 32px);
     padding: 14px 20px;
-    margin-top: 16px;
+    margin: 16px 16px 16px 16px;
     background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     border: none;
     border-radius: 10px;
@@ -973,14 +973,11 @@ body {
 }
 
 .compare-error {
-    padding: 8px 16px;
+    padding: 0 16px 12px 16px;
     font-size: 0.85rem;
     color: #f87171;
     min-height: 24px;
-}
-
-.compare-error.success {
-    color: #4ade80;
+    text-align: center;
 }
 
 .compare-results {
@@ -1008,11 +1005,11 @@ body {
 
 /* Comparison Results */
 .compare-chart-container {
-    background: rgba(15, 23, 42, 0.9);
+    background: rgba(15, 23, 42, 0.95);
     border: 1px solid rgba(99, 102, 241, 0.3);
     border-radius: 14px;
-    padding: 24px;
-    margin-bottom: 20px;
+    padding: 20px;
+    margin: 16px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -1023,47 +1020,10 @@ body {
     border-radius: 8px;
 }
 
-.compare-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-/* Comparison Difference */
-.compare-diff {
-    background: rgba(99, 102, 241, 0.1);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    border-radius: 12px;
-    padding: 14px;
-    text-align: center;
-}
-
-.compare-diff-title {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
-}
-
-.compare-diff-value {
-    font-size: 1.3rem;
-    font-weight: 700;
-}
-
-.compare-diff-value.higher {
-    color: #f87171;
-}
-
-.compare-diff-value.lower {
-    color: #4ade80;
-}
-
-.compare-diff-label {
-    font-size: 0.75rem;
-    color: #94a3b8;
-    margin-top: 4px;
+.compare-results {
+    padding: 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 280px);
 }
 
 /* Hide compare panel on mobile */

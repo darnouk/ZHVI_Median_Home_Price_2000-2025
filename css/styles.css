@@ -926,6 +926,13 @@ body {
     margin-bottom: 6px;
 }
 
+.compare-label .optional-label {
+    font-size: 0.65rem;
+    color: #64748b;
+    text-transform: none;
+    font-weight: 400;
+}
+
 .compare-input {
     width: 100%;
     padding: 12px 16px;

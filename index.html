@@ -186,6 +186,11 @@
                 <label class="compare-label">ZIP Code 2</label>
                 <input type="text" id="compareZip2" class="compare-input" placeholder="Enter ZIP..." maxlength="5" inputmode="numeric">
             </div>
+            <div class="compare-vs">VS</div>
+            <div class="compare-input-group">
+                <label class="compare-label">ZIP Code 3 <span class="optional-label">(optional)</span></label>
+                <input type="text" id="compareZip3" class="compare-input" placeholder="Enter ZIP..." maxlength="5" inputmode="numeric">
+            </div>
         </div>
         <button class="compare-generate-btn" id="compareGenerateBtn">Generate Graph</button>
         <div class="compare-error" id="compareError"></div>
@@ -195,7 +200,7 @@
                     <path d="M3 3v18h18"/>
                     <path d="M7 16l4-8 4 4 6-6"/>
                 </svg>
-                <p>Enter two ZIP codes to compare their price history</p>
+                <p>Enter two or three ZIP codes to compare their price history</p>
             </div>
         </div>
         <button class="compare-toggle" id="compareToggle" title="Compare ZIP Codes">

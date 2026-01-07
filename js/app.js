@@ -27,7 +27,7 @@ const AppState = {
     maxAffordablePrice: null,  // Calculated from income (3.5x multiplier)
     AFFORDABILITY_MULTIPLIER: 3.5,  // Standard mortgage qualification rule
     // Comparison feature
-    compareZips: { zip1: null, zip2: null }
+    compareZips: { zip1: null, zip2: null, zip3: null }
 };
 
 // DOM element cache
@@ -75,6 +75,7 @@ function cacheElements() {
     Elements.compareClose = document.getElementById('compareClose');
     Elements.compareZip1 = document.getElementById('compareZip1');
     Elements.compareZip2 = document.getElementById('compareZip2');
+    Elements.compareZip3 = document.getElementById('compareZip3');
     Elements.compareGenerateBtn = document.getElementById('compareGenerateBtn');
     Elements.compareError = document.getElementById('compareError');
     Elements.compareResults = document.getElementById('compareResults');
@@ -587,9 +588,10 @@ async function renderState(stateAbbr) {
     }
     
     // Clear comparison when state changes (ZIPs are state-specific)
-    AppState.compareZips = { zip1: null, zip2: null };
+    AppState.compareZips = { zip1: null, zip2: null, zip3: null };
     if (Elements.compareZip1) Elements.compareZip1.value = '';
     if (Elements.compareZip2) Elements.compareZip2.value = '';
+    if (Elements.compareZip3) Elements.compareZip3.value = '';
     if (Elements.compareResults) updateComparisonResults();
 }
 
@@ -1057,15 +1059,16 @@ function updateAffordabilityDisplay() {
 }
 
 /**
- * Add a ZIP code to comparison
+ * Add ZIP codes to comparison
  * @param {string} zip1 - First ZIP code
  * @param {string} zip2 - Second ZIP code
+ * @param {string} zip3 - Third ZIP code (optional)
  */
-function generateComparison(zip1, zip2) {
+function generateComparison(zip1, zip2, zip3) {
     // Clear previous error
     Elements.compareError.textContent = '';
     
-    // Validate both ZIPs
+    // Validate required ZIPs
     if (!zip1 || zip1.length !== 5) {
         Elements.compareError.textContent = 'Please enter a valid 5-digit ZIP code for ZIP Code 1';
         return;
@@ -1076,9 +1079,16 @@ function generateComparison(zip1, zip2) {
         return;
     }
 
+    // Validate optional ZIP3 if provided
+    if (zip3 && zip3.length !== 5) {
+        Elements.compareError.textContent = 'Please enter a valid 5-digit ZIP code for ZIP Code 3';
+        return;
+    }
+
     // Check if ZIPs exist in database
     const data1 = AppState.zhviData[zip1];
     const data2 = AppState.zhviData[zip2];
+    const data3 = zip3 ? AppState.zhviData[zip3] : null;
     
     if (!data1) {
         Elements.compareError.textContent = `ZIP ${zip1} not found in database`;
@@ -1090,6 +1100,11 @@ function generateComparison(zip1, zip2) {
         return;
     }
 
+    if (zip3 && !data3) {
+        Elements.compareError.textContent = `ZIP ${zip3} not found in database`;
+        return;
+    }
+
     // Check if ZIPs are in current state's GeoJSON
     if (AppState.currentGeoJSON) {
         const zip1InState = AppState.currentGeoJSON.features.some(
@@ -1098,6 +1113,9 @@ function generateComparison(zip1, zip2) {
         const zip2InState = AppState.currentGeoJSON.features.some(
             f => f.properties.ZCTA5CE10 === zip2
         );
+        const zip3InState = zip3 ? AppState.currentGeoJSON.features.some(
+            f => f.properties.ZCTA5CE10 === zip3
+        ) : true;
         
         if (!zip1InState) {
             Elements.compareError.textContent = `ZIP ${zip1} not in current state`;
@@ -1108,10 +1126,15 @@ function generateComparison(zip1, zip2) {
             Elements.compareError.textContent = `ZIP ${zip2} not in current state`;
             return;
         }
+
+        if (zip3 && !zip3InState) {
+            Elements.compareError.textContent = `ZIP ${zip3} not in current state`;
+            return;
+        }
     }
 
     // Store comparison
-    AppState.compareZips = { zip1, zip2 };
+    AppState.compareZips = { zip1, zip2, zip3: zip3 || null };
     
     // Update results
     updateComparisonResults();
@@ -1172,7 +1195,7 @@ function getZipStats(zip) {
  * Update the comparison results display
  */
 function updateComparisonResults() {
-    const { zip1, zip2 } = AppState.compareZips;
+    const { zip1, zip2, zip3 } = AppState.compareZips;
 
     // If neither ZIP is set, show placeholder and collapse panel width
     if (!zip1 && !zip2) {
@@ -1183,58 +1206,70 @@ function updateComparisonResults() {
                     <path d="M3 3v18h18"/>
                     <path d="M7 16l4-8 4 4 6-6"/>
                 </svg>
-                <p>Enter two ZIP codes to compare their price history</p>
+                <p>Enter two or three ZIP codes to compare their price history</p>
             </div>
         `;
         return;
     }
 
-    // Chart container (only if both ZIPs are set)
+    // Chart container (only if both required ZIPs are set)
     if (zip1 && zip2) {
         // Expand panel for better chart visibility
         Elements.comparePanel.classList.add('expanded');
         Elements.compareResults.innerHTML = '<div class="compare-chart-container"><canvas id="compareChart"></canvas></div>';
         // Small delay to allow panel to expand before drawing
-        setTimeout(() => drawComparisonChart(zip1, zip2), 50);
+        setTimeout(() => drawComparisonChart(zip1, zip2, zip3), 50);
     } else {
         Elements.comparePanel.classList.remove('expanded');
         Elements.compareResults.innerHTML = `
             <div class="compare-placeholder">
-                <p>Please enter both ZIP codes to generate comparison</p>
+                <p>Please enter at least two ZIP codes to generate comparison</p>
             </div>
         `;
     }
 }
 
 /**
- * Draw comparison line chart for two ZIP codes with interactive crosshair
+ * Draw comparison line chart for up to three ZIP codes with interactive crosshair
  * @param {string} zip1 - First ZIP code
  * @param {string} zip2 - Second ZIP code
+ * @param {string} zip3 - Third ZIP code (optional)
  */
-function drawComparisonChart(zip1, zip2) {
+function drawComparisonChart(zip1, zip2, zip3) {
     const canvas = document.getElementById('compareChart');
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     const data1 = AppState.zhviData[zip1];
     const data2 = AppState.zhviData[zip2];
+    const data3 = zip3 ? AppState.zhviData[zip3] : null;
 
     if (!data1 || !data2) return;
 
-    // Collect data points for both ZIPs
+    // Colors for each ZIP - accessible color palette
+    const colors = {
+        zip1: '#ff4444',  // Red
+        zip2: '#4488ff',  // Blue
+        zip3: '#22c55e'   // Green (accessible, contrasts with red/blue)
+    };
+
+    // Collect data points for all ZIPs
     const years = [];
     const prices1 = [];
     const prices2 = [];
+    const prices3 = [];
 
     for (let year = 2000; year <= 2025; year++) {
         const price1 = parseFloat(data1[year]);
         const price2 = parseFloat(data2[year]);
+        const price3 = data3 ? parseFloat(data3[year]) : 0;
         
         // Only include years where at least one ZIP has data
-        if ((price1 > 0) || (price2 > 0)) {
+        if ((price1 > 0) || (price2 > 0) || (price3 > 0)) {
             years.push(year);
             prices1.push(price1 > 0 ? price1 : null);
             prices2.push(price2 > 0 ? price2 : null);
+            prices3.push(price3 > 0 ? price3 : null);
         }
     }
 
@@ -1258,8 +1293,12 @@ function drawComparisonChart(zip1, zip2) {
     const chartWidth = displayWidth - padding.left - padding.right;
     const chartHeight = displayHeight - padding.top - padding.bottom;
 
-    // Find min/max for scaling
-    const allPrices = [...prices1.filter(p => p !== null), ...prices2.filter(p => p !== null)];
+    // Find min/max for scaling (include zip3 if present)
+    const allPrices = [
+        ...prices1.filter(p => p !== null),
+        ...prices2.filter(p => p !== null),
+        ...prices3.filter(p => p !== null)
+    ];
     const minPrice = Math.min(...allPrices) * 0.90;
     const maxPrice = Math.max(...allPrices) * 1.10;
 
@@ -1270,12 +1309,42 @@ function drawComparisonChart(zip1, zip2) {
         return padding.top + chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
     };
 
-    // Store chart state for crosshair redraw
-    const chartState = {
-        years, prices1, prices2, zip1, zip2,
-        displayWidth, displayHeight, padding, chartWidth, chartHeight,
-        minPrice, maxPrice, getX, getY, dpr
-    };
+    // Draw a line for a set of prices
+    function drawLine(prices, color) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        let firstPoint = true;
+        prices.forEach((price, index) => {
+            if (price !== null) {
+                const x = getX(index);
+                const y = getY(price);
+                if (firstPoint) {
+                    ctx.moveTo(x, y);
+                    firstPoint = false;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+        });
+        ctx.stroke();
+    }
+
+    // Draw points for a set of prices
+    function drawPoints(prices, color) {
+        prices.forEach((price, index) => {
+            if (price !== null) {
+                const x = getX(index);
+                const y = getY(price);
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, 2.5, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        });
+    }
 
     // Main draw function
     function drawChart(hoverIndex = -1) {
@@ -1323,68 +1392,15 @@ function drawComparisonChart(zip1, zip2) {
             }
         });
 
-        // Draw line for ZIP 1 (red)
-        ctx.strokeStyle = '#ff4444';
-        ctx.lineWidth = 2.5;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        let firstPoint1 = true;
-        prices1.forEach((price, index) => {
-            if (price !== null) {
-                const x = getX(index);
-                const y = getY(price);
-                if (firstPoint1) {
-                    ctx.moveTo(x, y);
-                    firstPoint1 = false;
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-        });
-        ctx.stroke();
+        // Draw lines for all ZIPs
+        drawLine(prices1, colors.zip1);
+        drawLine(prices2, colors.zip2);
+        if (zip3) drawLine(prices3, colors.zip3);
 
-        // Draw line for ZIP 2 (blue)
-        ctx.strokeStyle = '#4488ff';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        let firstPoint2 = true;
-        prices2.forEach((price, index) => {
-            if (price !== null) {
-                const x = getX(index);
-                const y = getY(price);
-                if (firstPoint2) {
-                    ctx.moveTo(x, y);
-                    firstPoint2 = false;
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-        });
-        ctx.stroke();
-
-        // Draw small points for each year
-        prices1.forEach((price, index) => {
-            if (price !== null) {
-                const x = getX(index);
-                const y = getY(price);
-                ctx.fillStyle = '#ff4444';
-                ctx.beginPath();
-                ctx.arc(x, y, 2.5, 0, 2 * Math.PI);
-                ctx.fill();
-            }
-        });
-
-        prices2.forEach((price, index) => {
-            if (price !== null) {
-                const x = getX(index);
-                const y = getY(price);
-                ctx.fillStyle = '#4488ff';
-                ctx.beginPath();
-                ctx.arc(x, y, 2.5, 0, 2 * Math.PI);
-                ctx.fill();
-            }
-        });
+        // Draw points for all ZIPs
+        drawPoints(prices1, colors.zip1);
+        drawPoints(prices2, colors.zip2);
+        if (zip3) drawPoints(prices3, colors.zip3);
 
         // Draw crosshair and tooltip if hovering
         if (hoverIndex >= 0 && hoverIndex < years.length) {
@@ -1392,6 +1408,7 @@ function drawComparisonChart(zip1, zip2) {
             const hoverYear = years[hoverIndex];
             const hoverPrice1 = prices1[hoverIndex];
             const hoverPrice2 = prices2[hoverIndex];
+            const hoverPrice3 = zip3 ? prices3[hoverIndex] : null;
 
             // Vertical crosshair line
             ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
@@ -1404,31 +1421,26 @@ function drawComparisonChart(zip1, zip2) {
             ctx.setLineDash([]);
 
             // Highlight points on hover
-            if (hoverPrice1 !== null) {
-                const y1 = getY(hoverPrice1);
-                ctx.fillStyle = '#ff4444';
-                ctx.beginPath();
-                ctx.arc(hoverX, y1, 6, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
+            const highlightPoint = (price, color) => {
+                if (price !== null) {
+                    const y = getY(price);
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(hoverX, y, 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            };
 
-            if (hoverPrice2 !== null) {
-                const y2 = getY(hoverPrice2);
-                ctx.fillStyle = '#4488ff';
-                ctx.beginPath();
-                ctx.arc(hoverX, y2, 6, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
+            highlightPoint(hoverPrice1, colors.zip1);
+            highlightPoint(hoverPrice2, colors.zip2);
+            if (zip3) highlightPoint(hoverPrice3, colors.zip3);
 
-            // Tooltip box
+            // Tooltip box - adjust height based on number of ZIPs
             const tooltipWidth = 130;
-            const tooltipHeight = 58;
+            const tooltipHeight = zip3 ? 74 : 58;
             let tooltipX = hoverX + 10;
             if (tooltipX + tooltipWidth > displayWidth - 10) {
                 tooltipX = hoverX - tooltipWidth - 10;
@@ -1453,12 +1465,16 @@ function drawComparisonChart(zip1, zip2) {
 
             ctx.font = '11px -apple-system, system-ui, sans-serif';
             if (hoverPrice1 !== null) {
-                ctx.fillStyle = '#ff4444';
+                ctx.fillStyle = colors.zip1;
                 ctx.fillText(`${zip1}: ${formatCurrency(hoverPrice1)}`, tooltipX + 10, tooltipY + 24);
             }
             if (hoverPrice2 !== null) {
-                ctx.fillStyle = '#4488ff';
+                ctx.fillStyle = colors.zip2;
                 ctx.fillText(`${zip2}: ${formatCurrency(hoverPrice2)}`, tooltipX + 10, tooltipY + 40);
+            }
+            if (zip3 && hoverPrice3 !== null) {
+                ctx.fillStyle = colors.zip3;
+                ctx.fillText(`${zip3}: ${formatCurrency(hoverPrice3)}`, tooltipX + 10, tooltipY + 56);
             }
         }
 
@@ -1469,34 +1485,47 @@ function drawComparisonChart(zip1, zip2) {
         ctx.textBaseline = 'top';
         ctx.fillText('Price History Comparison', displayWidth / 2, 8);
 
-        // Legend - properly centered
+        // Legend - properly centered with dynamic width
         ctx.font = 'bold 12px -apple-system, system-ui, sans-serif';
         ctx.textBaseline = 'middle';
         
-        const legendY = 32;
-        const zip1Width = ctx.measureText(zip1).width;
-        const zip2Width = ctx.measureText(zip2).width;
+        const legendY = 34;
         const dotSize = 6;
-        const dotTextGap = 8;
-        const zipGap = 30;
-        const totalLegendWidth = dotSize + dotTextGap + zip1Width + zipGap + dotSize + dotTextGap + zip2Width;
-        const legendStartX = (displayWidth - totalLegendWidth) / 2;
-        
-        // ZIP 1 legend - RED
-        ctx.fillStyle = '#ff4444';
-        ctx.beginPath();
-        ctx.arc(legendStartX + dotSize/2, legendY, dotSize/2, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.textAlign = 'left';
-        ctx.fillText(zip1, legendStartX + dotSize + dotTextGap, legendY);
-        
-        // ZIP 2 legend - BLUE
-        const zip2DotX = legendStartX + dotSize + dotTextGap + zip1Width + zipGap;
-        ctx.fillStyle = '#4488ff';
-        ctx.beginPath();
-        ctx.arc(zip2DotX + dotSize/2, legendY, dotSize/2, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.fillText(zip2, zip2DotX + dotSize + dotTextGap, legendY);
+        const dotTextGap = 6;
+        const zipGap = 20;
+
+        // Build legend items
+        const legendItems = [
+            { zip: zip1, color: colors.zip1 },
+            { zip: zip2, color: colors.zip2 }
+        ];
+        if (zip3) {
+            legendItems.push({ zip: zip3, color: colors.zip3 });
+        }
+
+        // Calculate total legend width
+        let totalLegendWidth = 0;
+        legendItems.forEach((item, i) => {
+            totalLegendWidth += dotSize + dotTextGap + ctx.measureText(item.zip).width;
+            if (i < legendItems.length - 1) totalLegendWidth += zipGap;
+        });
+
+        // Draw legend items
+        let currentX = (displayWidth - totalLegendWidth) / 2;
+        legendItems.forEach((item, i) => {
+            // Draw dot
+            ctx.fillStyle = item.color;
+            ctx.beginPath();
+            ctx.arc(currentX + dotSize / 2, legendY, dotSize / 2, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw text
+            ctx.textAlign = 'left';
+            ctx.fillText(item.zip, currentX + dotSize + dotTextGap, legendY);
+            
+            // Move to next item
+            currentX += dotSize + dotTextGap + ctx.measureText(item.zip).width + zipGap;
+        });
     }
 
     // Initial draw
@@ -1557,21 +1586,48 @@ function setupCompareListeners() {
         Elements.compareError.textContent = '';
     });
 
+    Elements.compareZip3.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5);
+        Elements.compareError.textContent = '';
+    });
+
     // Generate button
     Elements.compareGenerateBtn.addEventListener('click', () => {
-        generateComparison(Elements.compareZip1.value, Elements.compareZip2.value);
+        generateComparison(
+            Elements.compareZip1.value,
+            Elements.compareZip2.value,
+            Elements.compareZip3.value || null
+        );
     });
 
     // Enter key support
     Elements.compareZip1.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            generateComparison(Elements.compareZip1.value, Elements.compareZip2.value);
+            generateComparison(
+                Elements.compareZip1.value,
+                Elements.compareZip2.value,
+                Elements.compareZip3.value || null
+            );
         }
     });
 
     Elements.compareZip2.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            generateComparison(Elements.compareZip1.value, Elements.compareZip2.value);
+            generateComparison(
+                Elements.compareZip1.value,
+                Elements.compareZip2.value,
+                Elements.compareZip3.value || null
+            );
+        }
+    });
+
+    Elements.compareZip3.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            generateComparison(
+                Elements.compareZip1.value,
+                Elements.compareZip2.value,
+                Elements.compareZip3.value || null
+            );
         }
     });
 

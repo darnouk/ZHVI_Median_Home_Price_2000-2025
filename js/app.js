@@ -1171,7 +1171,14 @@ function updateComparisonResults() {
         return;
     }
 
-    let html = '<div class="compare-cards">';
+    let html = '';
+
+    // Chart container (only if both ZIPs are set)
+    if (zip1 && zip2) {
+        html += '<div class="compare-chart-container"><canvas id="compareChart"></canvas></div>';
+    }
+
+    html += '<div class="compare-cards">';
 
     // ZIP 1 card
     if (zip1) {
@@ -1214,6 +1221,189 @@ function updateComparisonResults() {
 
     html += '</div>';
     Elements.compareResults.innerHTML = html;
+
+    // Draw the chart if both ZIPs are present
+    if (zip1 && zip2) {
+        drawComparisonChart(zip1, zip2);
+    }
+}
+
+/**
+ * Draw comparison line chart for two ZIP codes
+ * @param {string} zip1 - First ZIP code
+ * @param {string} zip2 - Second ZIP code
+ */
+function drawComparisonChart(zip1, zip2) {
+    const canvas = document.getElementById('compareChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const data1 = AppState.zhviData[zip1];
+    const data2 = AppState.zhviData[zip2];
+
+    if (!data1 || !data2) return;
+
+    // Collect data points for both ZIPs
+    const years = [];
+    const prices1 = [];
+    const prices2 = [];
+
+    for (let year = 2000; year <= 2025; year++) {
+        const price1 = parseFloat(data1[year]);
+        const price2 = parseFloat(data2[year]);
+        
+        // Only include years where at least one ZIP has data
+        if ((price1 > 0) || (price2 > 0)) {
+            years.push(year);
+            prices1.push(price1 > 0 ? price1 : null);
+            prices2.push(price2 > 0 ? price2 : null);
+        }
+    }
+
+    if (years.length === 0) return;
+
+    // Set canvas size
+    const width = canvas.parentElement.clientWidth - 40;
+    const height = 300;
+    canvas.width = width;
+    canvas.height = height;
+
+    // Chart dimensions
+    const padding = { top: 40, right: 20, bottom: 50, left: 70 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+
+    // Find min/max for scaling
+    const allPrices = [...prices1.filter(p => p !== null), ...prices2.filter(p => p !== null)];
+    const minPrice = Math.min(...allPrices) * 0.95;
+    const maxPrice = Math.max(...allPrices) * 1.05;
+
+    // Helper functions
+    const getX = (index) => padding.left + (index / (years.length - 1)) * chartWidth;
+    const getY = (price) => {
+        if (price === null) return null;
+        return padding.top + chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
+    };
+
+    // Clear canvas
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw grid lines
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 5; i++) {
+        const y = padding.top + (chartHeight / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(padding.left + chartWidth, y);
+        ctx.stroke();
+    }
+
+    // Draw Y-axis labels (prices)
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 5; i++) {
+        const price = minPrice + (maxPrice - minPrice) * (1 - i / 5);
+        const y = padding.top + (chartHeight / 5) * i;
+        ctx.fillText(formatCurrency(price), padding.left - 10, y + 4);
+    }
+
+    // Draw X-axis labels (years) - show every 5 years
+    ctx.textAlign = 'center';
+    years.forEach((year, index) => {
+        if (year % 5 === 0 || year === 2025) {
+            const x = getX(index);
+            ctx.fillText(year.toString(), x, height - padding.bottom + 20);
+        }
+    });
+
+    // Draw line for ZIP 1 (red)
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    let firstPoint1 = true;
+    prices1.forEach((price, index) => {
+        if (price !== null) {
+            const x = getX(index);
+            const y = getY(price);
+            if (firstPoint1) {
+                ctx.moveTo(x, y);
+                firstPoint1 = false;
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+    });
+    ctx.stroke();
+
+    // Draw line for ZIP 2 (blue)
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    let firstPoint2 = true;
+    prices2.forEach((price, index) => {
+        if (price !== null) {
+            const x = getX(index);
+            const y = getY(price);
+            if (firstPoint2) {
+                ctx.moveTo(x, y);
+                firstPoint2 = false;
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+    });
+    ctx.stroke();
+
+    // Draw points for ZIP 1
+    prices1.forEach((price, index) => {
+        if (price !== null) {
+            const x = getX(index);
+            const y = getY(price);
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+    });
+
+    // Draw points for ZIP 2
+    prices2.forEach((price, index) => {
+        if (price !== null) {
+            const x = getX(index);
+            const y = getY(price);
+            ctx.fillStyle = '#3b82f6';
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+    });
+
+    // Draw legend
+    ctx.textAlign = 'left';
+    ctx.font = '14px sans-serif';
+    
+    // ZIP 1 legend
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(padding.left, 15, 20, 3);
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillText(`ZIP ${zip1}`, padding.left + 30, 20);
+    
+    // ZIP 2 legend
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(padding.left + 150, 15, 20, 3);
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillText(`ZIP ${zip2}`, padding.left + 180, 20);
+
+    // Title
+    ctx.fillStyle = '#f1f5f9';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Price History Comparison', width / 2, 25);
 }
 
 /**
@@ -1229,7 +1419,7 @@ function generateCompareCard(stats, className) {
     return `
         <div class="compare-card ${className}">
             <div class="compare-card-header">
-                <span class="compare-card-zip">📍 ${stats.zip}</span>
+                <span class="compare-card-zip">${stats.zip}</span>
                 <span class="compare-card-price">${formatCurrency(stats.currentPrice)}</span>
             </div>
             <div class="compare-card-change ${changeClass}">

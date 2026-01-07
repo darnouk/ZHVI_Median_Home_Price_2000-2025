@@ -14,7 +14,7 @@ const AppState = {
     currentLayer: null,
     currentGeoJSON: null,  // Cache current state's GeoJSON
     zhviData: {},          // Price data by ZIP code
-    currentYear: 2000,
+    currentYear: 2025,
     currentState: null,
     isPlaying: false,
     playInterval: null,

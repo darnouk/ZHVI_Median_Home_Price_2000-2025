@@ -1207,7 +1207,7 @@ function updateComparisonResults() {
 }
 
 /**
- * Draw comparison line chart for two ZIP codes
+ * Draw comparison line chart for two ZIP codes with interactive crosshair
  * @param {string} zip1 - First ZIP code
  * @param {string} zip2 - Second ZIP code
  */
@@ -1270,145 +1270,264 @@ function drawComparisonChart(zip1, zip2) {
         return padding.top + chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
     };
 
-    // Clear canvas with dark background
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, displayWidth, displayHeight);
+    // Store chart state for crosshair redraw
+    const chartState = {
+        years, prices1, prices2, zip1, zip2,
+        displayWidth, displayHeight, padding, chartWidth, chartHeight,
+        minPrice, maxPrice, getX, getY, dpr
+    };
 
-    // Draw grid lines (horizontal only)
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 1;
-    const gridLines = 5;
-    for (let i = 0; i <= gridLines; i++) {
-        const y = padding.top + (chartHeight / gridLines) * i;
+    // Main draw function
+    function drawChart(hoverIndex = -1) {
+        const ctx = canvas.getContext('2d');
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+
+        // Clear canvas with dark background
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, displayWidth, displayHeight);
+
+        // Draw grid lines (horizontal only)
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1;
+        const gridLines = 5;
+        for (let i = 0; i <= gridLines; i++) {
+            const y = padding.top + (chartHeight / gridLines) * i;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, y);
+            ctx.lineTo(padding.left + chartWidth, y);
+            ctx.stroke();
+        }
+
+        // Draw Y-axis labels (prices)
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '12px -apple-system, system-ui, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for (let i = 0; i <= gridLines; i++) {
+            const price = minPrice + (maxPrice - minPrice) * (1 - i / gridLines);
+            const y = padding.top + (chartHeight / gridLines) * i;
+            ctx.fillText(formatCurrency(price), padding.left - 10, y);
+        }
+
+        // Draw X-axis labels (years) - show every 5 years
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        years.forEach((year, index) => {
+            if (year % 5 === 0) {
+                const x = getX(index);
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText(year.toString(), x, displayHeight - padding.bottom + 10);
+            }
+        });
+
+        // Draw line for ZIP 1 (red)
+        ctx.strokeStyle = '#ff4444';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.beginPath();
-        ctx.moveTo(padding.left, y);
-        ctx.lineTo(padding.left + chartWidth, y);
+        let firstPoint1 = true;
+        prices1.forEach((price, index) => {
+            if (price !== null) {
+                const x = getX(index);
+                const y = getY(price);
+                if (firstPoint1) {
+                    ctx.moveTo(x, y);
+                    firstPoint1 = false;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+        });
         ctx.stroke();
-    }
 
-    // Draw Y-axis labels (prices)
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '12px -apple-system, system-ui, sans-serif';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    for (let i = 0; i <= gridLines; i++) {
-        const price = minPrice + (maxPrice - minPrice) * (1 - i / gridLines);
-        const y = padding.top + (chartHeight / gridLines) * i;
-        ctx.fillText(formatCurrency(price), padding.left - 10, y);
-    }
+        // Draw line for ZIP 2 (blue)
+        ctx.strokeStyle = '#4488ff';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        let firstPoint2 = true;
+        prices2.forEach((price, index) => {
+            if (price !== null) {
+                const x = getX(index);
+                const y = getY(price);
+                if (firstPoint2) {
+                    ctx.moveTo(x, y);
+                    firstPoint2 = false;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+        });
+        ctx.stroke();
 
-    // Draw X-axis labels (years) - show 2000, 2010, 2020, and last year
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    years.forEach((year, index) => {
-        if (year === 2000 || year === 2010 || year === 2020 || year === years[years.length - 1]) {
-            const x = getX(index);
-            ctx.fillText(year.toString(), x, displayHeight - padding.bottom + 10);
-        }
-    });
+        // Draw small points for each year
+        prices1.forEach((price, index) => {
+            if (price !== null) {
+                const x = getX(index);
+                const y = getY(price);
+                ctx.fillStyle = '#ff4444';
+                ctx.beginPath();
+                ctx.arc(x, y, 2.5, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        });
 
-    // Draw line for ZIP 1 (brighter red)
-    ctx.strokeStyle = '#ff4444';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.shadowColor = 'rgba(255, 68, 68, 0.3)';
-    ctx.shadowBlur = 4;
-    ctx.beginPath();
-    let firstPoint1 = true;
-    prices1.forEach((price, index) => {
-        if (price !== null) {
-            const x = getX(index);
-            const y = getY(price);
-            if (firstPoint1) {
-                ctx.moveTo(x, y);
-                firstPoint1 = false;
-            } else {
-                ctx.lineTo(x, y);
+        prices2.forEach((price, index) => {
+            if (price !== null) {
+                const x = getX(index);
+                const y = getY(price);
+                ctx.fillStyle = '#4488ff';
+                ctx.beginPath();
+                ctx.arc(x, y, 2.5, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        });
+
+        // Draw crosshair and tooltip if hovering
+        if (hoverIndex >= 0 && hoverIndex < years.length) {
+            const hoverX = getX(hoverIndex);
+            const hoverYear = years[hoverIndex];
+            const hoverPrice1 = prices1[hoverIndex];
+            const hoverPrice2 = prices2[hoverIndex];
+
+            // Vertical crosshair line
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(hoverX, padding.top);
+            ctx.lineTo(hoverX, padding.top + chartHeight);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Highlight points on hover
+            if (hoverPrice1 !== null) {
+                const y1 = getY(hoverPrice1);
+                ctx.fillStyle = '#ff4444';
+                ctx.beginPath();
+                ctx.arc(hoverX, y1, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            if (hoverPrice2 !== null) {
+                const y2 = getY(hoverPrice2);
+                ctx.fillStyle = '#4488ff';
+                ctx.beginPath();
+                ctx.arc(hoverX, y2, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Tooltip box
+            const tooltipWidth = 130;
+            const tooltipHeight = 58;
+            let tooltipX = hoverX + 10;
+            if (tooltipX + tooltipWidth > displayWidth - 10) {
+                tooltipX = hoverX - tooltipWidth - 10;
+            }
+            const tooltipY = padding.top + 10;
+
+            // Tooltip background
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.95)';
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 6);
+            ctx.fill();
+            ctx.stroke();
+
+            // Tooltip content
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = 'bold 12px -apple-system, system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(hoverYear.toString(), tooltipX + 10, tooltipY + 8);
+
+            ctx.font = '11px -apple-system, system-ui, sans-serif';
+            if (hoverPrice1 !== null) {
+                ctx.fillStyle = '#ff4444';
+                ctx.fillText(`${zip1}: ${formatCurrency(hoverPrice1)}`, tooltipX + 10, tooltipY + 24);
+            }
+            if (hoverPrice2 !== null) {
+                ctx.fillStyle = '#4488ff';
+                ctx.fillText(`${zip2}: ${formatCurrency(hoverPrice2)}`, tooltipX + 10, tooltipY + 40);
             }
         }
-    });
-    ctx.stroke();
-    ctx.shadowBlur = 0;
 
-    // Draw line for ZIP 2 (brighter blue)
-    ctx.strokeStyle = '#4488ff';
-    ctx.lineWidth = 3.5;
-    ctx.shadowColor = 'rgba(68, 136, 255, 0.3)';
-    ctx.shadowBlur = 4;
-    ctx.beginPath();
-    let firstPoint2 = true;
-    prices2.forEach((price, index) => {
-        if (price !== null) {
-            const x = getX(index);
-            const y = getY(price);
-            if (firstPoint2) {
-                ctx.moveTo(x, y);
-                firstPoint2 = false;
-            } else {
-                ctx.lineTo(x, y);
-            }
+        // Title
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = 'bold 15px -apple-system, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Price History Comparison', displayWidth / 2, 8);
+
+        // Legend - properly centered
+        ctx.font = 'bold 12px -apple-system, system-ui, sans-serif';
+        ctx.textBaseline = 'middle';
+        
+        const legendY = 32;
+        const zip1Width = ctx.measureText(zip1).width;
+        const zip2Width = ctx.measureText(zip2).width;
+        const dotSize = 6;
+        const dotTextGap = 8;
+        const zipGap = 30;
+        const totalLegendWidth = dotSize + dotTextGap + zip1Width + zipGap + dotSize + dotTextGap + zip2Width;
+        const legendStartX = (displayWidth - totalLegendWidth) / 2;
+        
+        // ZIP 1 legend - RED
+        ctx.fillStyle = '#ff4444';
+        ctx.beginPath();
+        ctx.arc(legendStartX + dotSize/2, legendY, dotSize/2, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.textAlign = 'left';
+        ctx.fillText(zip1, legendStartX + dotSize + dotTextGap, legendY);
+        
+        // ZIP 2 legend - BLUE
+        const zip2DotX = legendStartX + dotSize + dotTextGap + zip1Width + zipGap;
+        ctx.fillStyle = '#4488ff';
+        ctx.beginPath();
+        ctx.arc(zip2DotX + dotSize/2, legendY, dotSize/2, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillText(zip2, zip2DotX + dotSize + dotTextGap, legendY);
+    }
+
+    // Initial draw
+    drawChart();
+
+    // Mouse event handlers for crosshair
+    function getHoverIndex(e) {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        
+        // Check if mouse is in chart area
+        if (mouseX < padding.left || mouseX > padding.left + chartWidth) {
+            return -1;
         }
-    });
-    ctx.stroke();
-    ctx.shadowBlur = 0;
+        
+        // Find nearest data point
+        const relativeX = mouseX - padding.left;
+        const index = Math.round((relativeX / chartWidth) * (years.length - 1));
+        return Math.max(0, Math.min(years.length - 1, index));
+    }
 
-    // Draw points for ZIP 1
-    prices1.forEach((price, index) => {
-        if (price !== null) {
-            const x = getX(index);
-            const y = getY(price);
-            
-            // Inner dot only
-            ctx.fillStyle = '#ff4444';
-            ctx.beginPath();
-            ctx.arc(x, y, 3, 0, 2 * Math.PI);
-            ctx.fill();
-        }
-    });
+    canvas.onmousemove = (e) => {
+        const index = getHoverIndex(e);
+        drawChart(index);
+        canvas.style.cursor = index >= 0 ? 'crosshair' : 'default';
+    };
 
-    // Draw points for ZIP 2
-    prices2.forEach((price, index) => {
-        if (price !== null) {
-            const x = getX(index);
-            const y = getY(price);
-            
-            // Inner dot only
-            ctx.fillStyle = '#4488ff';
-            ctx.beginPath();
-            ctx.arc(x, y, 3, 0, 2 * Math.PI);
-            ctx.fill();
-        }
-    });
-
-    // Title
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = 'bold 16px -apple-system, system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText('Price History Comparison', displayWidth / 2, 10);
-
-    // Legend with color-coded ZIP labels - centered below title
-    ctx.font = 'bold 13px -apple-system, system-ui, sans-serif';
-    ctx.textBaseline = 'middle';
-    
-    const legendY = 35;
-    const legendSpacing = 120;
-    const legendStartX = displayWidth / 2 - legendSpacing / 2 - 50;
-    
-    // ZIP 1 legend - RED
-    ctx.fillStyle = '#ff4444';
-    ctx.beginPath();
-    ctx.arc(legendStartX, legendY, 5, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.fillText(zip1, legendStartX + 12, legendY);
-    
-    // ZIP 2 legend - BLUE
-    ctx.fillStyle = '#4488ff';
-    ctx.beginPath();
-    ctx.arc(legendStartX + legendSpacing, legendY, 5, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.fillText(zip2, legendStartX + legendSpacing + 12, legendY);
+    canvas.onmouseleave = () => {
+        drawChart(-1);
+        canvas.style.cursor = 'default';
+    };
 }
 
 /**

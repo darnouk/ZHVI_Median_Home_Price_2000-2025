@@ -988,15 +988,21 @@ function setupEventListeners() {
 
     // Welcome modal
     if (Elements.welcomeClose && Elements.welcomeModal) {
-        // Check if user has seen the modal before
-        const hasSeenWelcome = localStorage.getItem('zhvi_welcome_seen');
+        // Check if user has opted out of seeing the modal
+        const dontShowWelcome = localStorage.getItem('zhvi_welcome_dont_show');
         
-        // Show modal only if user hasn't seen it before
-        Elements.welcomeModal.classList.remove('hidden');
+        // Only show modal if user hasn't opted out
+        if (dontShowWelcome !== 'true') {
+            Elements.welcomeModal.classList.remove('hidden');
+        }
         
         const closeWelcomeModal = () => {
+            // Check if "Don't show again" is checked
+            const dontShowCheckbox = document.getElementById('welcomeDontShow');
+            if (dontShowCheckbox && dontShowCheckbox.checked) {
+                localStorage.setItem('zhvi_welcome_dont_show', 'true');
+            }
             Elements.welcomeModal.classList.add('hidden');
-            localStorage.setItem('zhvi_welcome_seen', 'true');
         };
         
         Elements.welcomeClose.addEventListener('click', (e) => {

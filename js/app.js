@@ -591,6 +591,10 @@ async function renderState(stateAbbr) {
     AppState.currentLayer.addTo(AppState.map);
     AppState.map.flyTo(state.center, state.zoom, { duration: 1 });
     
+    // Enable the play button now that a state is selected
+    Elements.playBtn.disabled = false;
+    Elements.playBtn.removeAttribute('title');
+    
     // Update affordability display if active
     if (AppState.affordabilityMode) {
         updateAffordabilityDisplay();
@@ -669,6 +673,11 @@ function setScaleMode(mode) {
  * Toggle timeline animation
  */
 function togglePlay() {
+    // Don't allow play if no state is selected
+    if (!AppState.currentState) {
+        return;
+    }
+    
     if (AppState.isPlaying) {
         // Stop
         clearInterval(AppState.playInterval);

@@ -1932,7 +1932,7 @@ body {
 .welcome-dont-show {
     display: block;
     text-align: center;
-    margin: 12px 28px 0;
+    margin: 16px 28px 28px;
     padding: 0;
     cursor: pointer;
     font-size: 0.8rem;

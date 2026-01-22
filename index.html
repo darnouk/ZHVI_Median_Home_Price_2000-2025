@@ -104,12 +104,15 @@
                     </button>
                 </div>
                 <div class="play-controls">
-                    <button id="playBtn" class="play-btn" disabled title="Select a state first to play the timeline">
-                        <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M8 5v14l11-7z"/>
-                        </svg>
-                        <span id="playText">Play Timeline</span>
-                    </button>
+                    <div class="play-btn-wrapper">
+                        <button id="playBtn" class="play-btn" disabled>
+                            <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                            <span id="playText">Play Timeline</span>
+                        </button>
+                        <span class="play-btn-tooltip" id="playBtnTooltip">Select a state first</span>
+                    </div>
                 </div>
 
                 <div class="scale-toggle-container">

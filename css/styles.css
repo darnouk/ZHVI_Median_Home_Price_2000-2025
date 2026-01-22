@@ -547,6 +547,54 @@ body {
     box-shadow: none;
 }
 
+/* Play button wrapper for tooltip */
+.play-btn-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+}
+
+.play-btn-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.95);
+    color: #fbbf24;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;
+    z-index: 100;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.play-btn-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(15, 23, 42, 0.95);
+}
+
+.play-btn-wrapper:hover .play-btn-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Hide tooltip when button is enabled */
+.play-btn-wrapper:has(.play-btn:not(:disabled)) .play-btn-tooltip {
+    display: none;
+}
+
 /* Scale Toggle */
 .scale-toggle-container {
     margin-top: 16px;

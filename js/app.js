@@ -593,7 +593,10 @@ async function renderState(stateAbbr) {
     
     // Enable the play button now that a state is selected
     Elements.playBtn.disabled = false;
-    Elements.playBtn.removeAttribute('title');
+    const playTooltip = document.getElementById('playBtnTooltip');
+    if (playTooltip) {
+        playTooltip.style.display = 'none';
+    }
     
     // Update affordability display if active
     if (AppState.affordabilityMode) {

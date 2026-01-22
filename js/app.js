@@ -1009,13 +1009,18 @@ function setupEventListeners() {
         }
         
         const closeWelcomeModal = () => {
-            // Check if "Don't show again" is checked
-            const dontShowCheckbox = document.getElementById('welcomeDontShow');
-            if (dontShowCheckbox && dontShowCheckbox.checked) {
-                localStorage.setItem('zhvi_welcome_dont_show', 'true');
-            }
             Elements.welcomeModal.classList.add('hidden');
         };
+        
+        // "Don't show again" clickable text
+        const dontShowLink = document.getElementById('welcomeDontShow');
+        if (dontShowLink) {
+            dontShowLink.addEventListener('click', (e) => {
+                e.stopPropagation();
+                localStorage.setItem('zhvi_welcome_dont_show', 'true');
+                Elements.welcomeModal.classList.add('hidden');
+            });
+        }
         
         Elements.welcomeClose.addEventListener('click', (e) => {
             e.stopPropagation();
